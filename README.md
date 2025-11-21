@@ -80,6 +80,19 @@ class Bot(ABC):
 ### Zachowaj API!
 Funkcja `get_bot(bot_type, platform)` musi dalej działać! Możesz zmienić jej implementację, ale sygnatura zostaje.
 
+Przykład adaptera implentującego zgodność ze wcześniejszymi testami:
+```python
+class TrollTwitterBot:
+    def __init__(self):
+        self._bot = TrollBot(Twitter())
+        self.bot_type = self._bot.bot_type
+        self.platform = self._bot.platform_name
+    
+    def generate_post(self, topic):
+        return self._bot.generate_post(topic)
+```
+
+
 ## Co zyskasz?
 - **8 klas zamiast 16** (4 boty + 4 platformy)
 - Dodanie Mastodona = **1 nowa klasa** (nie 4!)
@@ -88,7 +101,6 @@ Funkcja `get_bot(bot_type, platform)` musi dalej działać! Możesz zmienić jej
 - Możliwość zmiany platformy w runtime!
 
 ## Kryteria oceny
-- Testy przechodzą
 - Użyty wzorzec Bridge
 - Brak duplikacji kodu
 - Łatwo dodać nową platformę (1 klasa)
