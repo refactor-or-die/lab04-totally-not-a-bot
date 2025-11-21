@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 import random
 from typing import Dict
-from platform import Platform
+from social_platform import SocialPlatform
 
 # Abstrakcja (CO generuje)
 class Bot(ABC):
-    def __init__(self, platform: Platform):
+    def __init__(self, platform: SocialPlatform):
         self.platform = platform  # <-- TO JEST MOST!
     
     @abstractmethod
@@ -36,13 +36,29 @@ class Troll(Bot):
 class Spammer(Bot):
     bot_type = "Spammer"
     def generate_content(self, topic: str) -> str:
-        
+        spam_templates = [
+            f"NOWY {topic} COIN! 1000x gwarantowane!",
+            f"Zarobiles na {topic}? JA TAK! Sprawdz jak",
+            f"{topic} MOON SOON! Ostatnia szansa!"
+        ]
+        return random.choice(spam_templates)
 
 class Conspiracist(Bot):
     bot_type = "Conspiracist"
     def generate_content(self, topic: str) -> str:
-
+        conspiracies = [
+            f"Czy zastanawiales sie KOMU zalezy na {topic}?  Czy to jest prawda?",
+            f"{topic} to przykrywka dla PRAWDZIWEGO planu. Czy to jest prawda?",
+            f"Oni nie chca zebys wiedzial prawde o {topic}. Czy to jest prawda?"
+        ]
+        return random.choice(conspiracies)
+    
 class FakeNews(Bot):
     bot_type = "FakeNews"
     def generate_content(self, topic: str) -> str:
-
+        fake_news = [
+            f"BREAKING: Naukowcy potwierdzili ze {topic} jest niebezpieczne",
+            f"PILNE: Rzad ukrywa prawde o {topic}",
+            f"SZOK: Ekspert ujawnia co NAPRAWDE kryje sie za {topic}"
+        ]
+        return random.choice(fake_news)
