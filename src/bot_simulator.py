@@ -578,3 +578,5 @@ if __name__ == "__main__":
             print(f"\n[{platform}] Temat: {topic}")
             print("-" * 40)
             print(result["content"])
+
+            

@@ -65,4 +65,3 @@ class FakeNews(Bot):
         ]
         content = random.choice(fake_news)
         return content
-    
