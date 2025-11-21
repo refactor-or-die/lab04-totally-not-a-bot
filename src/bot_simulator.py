@@ -10,7 +10,7 @@ To nie jest skalowalne rozwiazanie...
 """
 from typing import Dict
 import random
-
+import bot
 
 # ============================================================================
 # TROLL BOTY - prowokuja klocnie na roznych platformach
@@ -511,42 +511,14 @@ def get_bot(bot_type: str, platform: str):
     
     SPÓJRZ NA TE IFY! 16 kombinacji! A co jak dodamy Mastodon i Reddit?
     """
-    if bot_type == "Troll":
-        if platform == "Twitter":
-            return TrollTwitterBot()
-        elif platform == "Facebook":
-            return TrollFacebookBot()
-        elif platform == "LinkedIn":
-            return TrollLinkedInBot()
-        elif platform == "TikTok":
-            return TrollTikTokBot()
-    elif bot_type == "Spammer":
-        if platform == "Twitter":
-            return SpammerTwitterBot()
-        elif platform == "Facebook":
-            return SpammerFacebookBot()
-        elif platform == "LinkedIn":
-            return SpammerLinkedInBot()
-        elif platform == "TikTok":
-            return SpammerTikTokBot()
-    elif bot_type == "Conspiracist":
-        if platform == "Twitter":
-            return ConspiracistTwitterBot()
-        elif platform == "Facebook":
-            return ConspiracistFacebookBot()
-        elif platform == "LinkedIn":
-            return ConspiracistLinkedInBot()
-        elif platform == "TikTok":
-            return ConspiracistTikTokBot()
-    elif bot_type == "FakeNews":
-        if platform == "Twitter":
-            return FakeNewsTwitterBot()
-        elif platform == "Facebook":
-            return FakeNewsFacebookBot()
-        elif platform == "LinkedIn":
-            return FakeNewsLinkedInBot()
-        elif platform == "TikTok":
-            return FakeNewsTikTokBot()
+    bots: list = bot.Bot.__subclasses__()
+    platforms: list = bot.Platform.__subclasses__()
+    
+    for p in platforms:
+        if p.__name__ == platform:
+            for b in bots:
+                if b.__name__ == bot_type:
+                    return b(platform=p)
     
     raise ValueError(f"Unknown bot_type '{bot_type}' or platform '{platform}'")
 
