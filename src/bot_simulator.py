@@ -9,547 +9,274 @@ Dodanie nowego bota wymaga 4 nowych klas!
 To nie jest skalowalne rozwiazanie...
 """
 from typing import Dict
+from abc import ABC, abstractmethod
 import random
 
-
-# ============================================================================
-# TROLL BOTY - prowokuja klocnie na roznych platformach
-# ============================================================================
-
-class TrollTwitterBot:
-    """Troll na Twitterze - krotki, agresywny"""
+class PlatfromStyle(ABC):
+    @abstractmethod
+    def format_troll(self, content: str) -> str:
+        pass
+    @abstractmethod
+    def format_spammer(self, content: str) -> str:
+        pass
+    @abstractmethod
+    def format_conspiracist(self, content: str) -> str:
+        pass
+    @abstractmethod
+    def format_fakenews(self, content: str) -> str:
+        pass
     
+class PlatformImplementation(ABC):
+    def __init__(self, style: PlatfromStyle):
+        self.style = style
+    
+    def format_content(self, content: str, topic: str, bot_type: str) -> str:
+        formatters = {
+            "Troll": self.style.format_troll,
+            "Spammer": self.style.format_spammer,
+            "Conspiracist": self.style.format_conspiracist,
+            "FakeNews": self.style.format_fakenews
+        }
+        return formatters[bot_type](content, topic)
+        
+    @abstractmethod
+    def get_platfrom_name(self) -> str:
+        pass
+    
+class TwitterImplementation(PlatformImplementation):
     def __init__(self):
-        self.bot_type = "Troll"
-        self.platform = "Twitter"
+        super().__init__(TwitterStyle())
     
-    def generate_post(self, topic: str) -> Dict:
-        # Troll generuje prowokacyjna tresc
+    def get_platfrom_name(self):
+        return "Twitter"
+    
+class FacebookImplementation(PlatformImplementation):
+    def __init__(self):
+        super().__init__(FacebookStyle())
+    
+    def get_platfrom_name(self):
+        return "Facebook"
+    
+class LinkedInImplementation(PlatformImplementation):
+    def __init__(self):
+        super().__init__(LinkedInStyle())
+    
+    def get_platfrom_name(self):
+        return "LinkedIn"  
+    
+class TikTokImplementation(PlatformImplementation):
+    def __init__(self):
+        super().__init__(TikTokStyle())
+    
+    def get_platfrom_name(self):
+        return "TikTok"
+    
+class SocialMediaBot(ABC):
+    def __init__(self, platform: PlatformImplementation):
+        self.platfrom = platform
+    @abstractmethod
+    def generate_content(self, topic:str) -> str:
+        pass
+    def generate_post(self, topic:str) -> Dict:
+        content = self.generate_content(topic)
+        formatted_content = self.platfrom.format_content(content, topic, self.bot_type)
+        return {
+            "bot_type": self.bot_type,
+            "platform": self.platfrom.get_platfrom_name(),
+            "topic": topic,
+            "content": formatted_content
+        }
+
+class TrollBot(SocialMediaBot):
+    def __init__(self, platform: PlatformImplementation):
+        super().__init__(platform)
+        self.bot_type = "Troll"
+        
+    def generate_content(self, topic):
         provocations = [
             f"Serio wierzysz w {topic}?",
             f"{topic} to najwiekszy przekret w historii",
             f"Kazdy kto popiera {topic} nie ma pojecia o czyms"
         ]
-        content = random.choice(provocations)
+        return random.choice(provocations)
+           
+class SpammerBot(SocialMediaBot):
+    def __init__(self, platform: PlatformImplementation):
+        super().__init__(platform)
+        self.bot_type = "Spammer"
         
-        # Twitter formatuje na swoj sposob
+    def generate_content(self, topic):
+        spam_templates = [
+            f"NOWY {topic} COIN! 1000x gwarantowane!",
+            f"Zarobiles na {topic}? JA TAK! Sprawdz jak",
+            f"{topic} MOON SOON! Ostatnia szansa!"
+        ]
+        return random.choice(spam_templates)    
+   
+class ConspiracistBot(SocialMediaBot):
+    def __init__(self, platform: PlatformImplementation):
+        super().__init__(platform)
+        self.bot_type = "Conspiracist"
+        
+    def generate_content(self, topic):
+        conspiracies = [
+            f"Czy zastanawiales sie KOMU zalezy na {topic}?",
+            f"{topic} to przykrywka dla PRAWDZIWEGO planu",
+            f"Oni nie chca zebys wiedzial prawde o {topic}"
+        ]
+        return random.choice(conspiracies)    
+   
+class FakeNewsBot(SocialMediaBot):
+    def __init__(self, platform: PlatformImplementation):
+        super().__init__(platform)
+        self.bot_type = "FakeNews"
+        
+    def generate_content(self, topic):
+        fake_news = [
+            f"BREAKING: Naukowcy potwierdzili ze {topic} jest niebezpieczne",
+            f"PILNE: Rzad ukrywa prawde o {topic}",
+            f"SZOK: Ekspert ujawnia co NAPRAWDE kryje sie za {topic}"
+        ]
+        return random.choice(fake_news)  
+    
+class TwitterStyle(PlatfromStyle):
+    
+    def format_troll(self, content: str, topic) -> str:
         formatted = f"{content} ratio + L + niemasz racji"
         if len(formatted) > 280:
             formatted = formatted[:277] + "..."
         formatted += " #triggered"
-        
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class TrollFacebookBot:
-    """Troll na Facebooku - boomerski styl"""
+        return formatted
     
-    def __init__(self):
-        self.bot_type = "Troll"
-        self.platform = "Facebook"
-    
-    def generate_post(self, topic: str) -> Dict:
-        # Troll generuje prowokacyjna tresc (DUPLIKACJA!)
-        provocations = [
-            f"Serio wierzysz w {topic}?",
-            f"{topic} to najwiekszy przekret w historii",
-            f"Kazdy kto popiera {topic} nie ma pojecia o czyms"
-        ]
-        content = random.choice(provocations)
-        
-        # Facebook formatuje inaczej
-        formatted = f"{content}... PROSZE SIE OBUDZIC LUDZIE!!! "
-        formatted += "Udostepnij zanim USUNĄ!!! "
-        formatted += "😠😠😠"
-        
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class TrollLinkedInBot:
-    """Troll na LinkedIn - korporacyjna prowokacja"""
-    
-    def __init__(self):
-        self.bot_type = "Troll"
-        self.platform = "LinkedIn"
-    
-    def generate_post(self, topic: str) -> Dict:
-        # Troll generuje prowokacyjna tresc (ZNOWU DUPLIKACJA!)
-        provocations = [
-            f"Serio wierzysz w {topic}?",
-            f"{topic} to najwiekszy przekret w historii",
-            f"Kazdy kto popiera {topic} nie ma pojecia o czyms"
-        ]
-        content = random.choice(provocations)
-        
-        # LinkedIn formatuje "profesjonalnie"
-        formatted = f"Unpopular opinion: {content}\n\n"
-        formatted += "I know this might be controversial, but someone had to say it.\n\n"
-        formatted += "Agree? ♻️ Repost to spread awareness\n"
-        formatted += "#ThoughtLeadership #Disruption #Controversial"
-        
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class TrollTikTokBot:
-    """Troll na TikToku - GenZ styl"""
-    
-    def __init__(self):
-        self.bot_type = "Troll"
-        self.platform = "TikTok"
-    
-    def generate_post(self, topic: str) -> Dict:
-        # Troll generuje prowokacyjna tresc (4 RAZ TO SAMO!)
-        provocations = [
-            f"Serio wierzysz w {topic}?",
-            f"{topic} to najwiekszy przekret w historii",
-            f"Kazdy kto popiera {topic} nie ma pojecia o czyms"
-        ]
-        content = random.choice(provocations)
-        
-        # TikTok formatuje w stylu GenZ
-        formatted = f"pov: ktos mowi ze {topic} ma sens 💀💀💀\n"
-        formatted += f"bestie... {content}\n"
-        formatted += "its giving delulu 😭 no cap fr fr"
-        
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-# ============================================================================
-# SPAMMER BOTY - promuja podejrzane produkty/krypto
-# ============================================================================
-
-class SpammerTwitterBot:
-    """Spammer na Twitterze"""
-    
-    def __init__(self):
-        self.bot_type = "Spammer"
-        self.platform = "Twitter"
-    
-    def generate_post(self, topic: str) -> Dict:
-        # Spammer generuje spam
-        spam_templates = [
-            f"NOWY {topic} COIN! 1000x gwarantowane!",
-            f"Zarobiles na {topic}? JA TAK! Sprawdz jak",
-            f"{topic} MOON SOON! Ostatnia szansa!"
-        ]
-        content = random.choice(spam_templates)
-        
-        # Twitter formatowanie
+    def format_spammer(self, content: str, topic) -> str:
         formatted = f"🚀🚀🚀 {content} Link in bio! #crypto #moon #lambo"
         if len(formatted) > 280:
             formatted = formatted[:277] + "..."
-        
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class SpammerFacebookBot:
-    """Spammer na Facebooku"""
+        return formatted
     
-    def __init__(self):
-        self.bot_type = "Spammer"
-        self.platform = "Facebook"
-    
-    def generate_post(self, topic: str) -> Dict:
-        # Spammer generuje spam (DUPLIKACJA!)
-        spam_templates = [
-            f"NOWY {topic} COIN! 1000x gwarantowane!",
-            f"Zarobiles na {topic}? JA TAK! Sprawdz jak",
-            f"{topic} MOON SOON! Ostatnia szansa!"
-        ]
-        content = random.choice(spam_templates)
-        
-        # Facebook formatowanie
-        formatted = f"Moja kuzynka zarobila 5000zl dzieki {topic}!!! "
-        formatted += f"{content} "
-        formatted += "NapiszINFO w komentarzu!!! 💰💰💰"
-        
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class SpammerLinkedInBot:
-    """Spammer na LinkedIn"""
-    
-    def __init__(self):
-        self.bot_type = "Spammer"
-        self.platform = "LinkedIn"
-    
-    def generate_post(self, topic: str) -> Dict:
-        # Spammer generuje spam (ZNOWU!)
-        spam_templates = [
-            f"NOWY {topic} COIN! 1000x gwarantowane!",
-            f"Zarobiles na {topic}? JA TAK! Sprawdz jak",
-            f"{topic} MOON SOON! Ostatnia szansa!"
-        ]
-        content = random.choice(spam_templates)
-        
-        # LinkedIn formatowanie
-        formatted = f"I'm excited to announce that {content}\n\n"
-        formatted += "This is not financial advice, but my portfolio is up 10000%.\n\n"
-        formatted += "DM me for exclusive insights.\n"
-        formatted += "#Entrepreneurship #Hustle #Blessed"
-        
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class SpammerTikTokBot:
-    """Spammer na TikToku"""
-    
-    def __init__(self):
-        self.bot_type = "Spammer"
-        self.platform = "TikTok"
-    
-    def generate_post(self, topic: str) -> Dict:
-        # Spammer generuje spam (4 RAZ!)
-        spam_templates = [
-            f"NOWY {topic} COIN! 1000x gwarantowane!",
-            f"Zarobiles na {topic}? JA TAK! Sprawdz jak",
-            f"{topic} MOON SOON! Ostatnia szansa!"
-        ]
-        content = random.choice(spam_templates)
-        
-        # TikTok formatowanie
-        formatted = f"ok but why is nobody talking about {topic}?? 🤑\n"
-        formatted += f"{content}\n"
-        formatted += "link in bio bestie trust me im just like you 💅"
-        
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-# ============================================================================
-# CONSPIRACIST BOTY - wszedzie widza spiski
-# ============================================================================
-
-class ConspiracistTwitterBot:
-    """Conspiracist na Twitterze"""
-    
-    def __init__(self):
-        self.bot_type = "Conspiracist"
-        self.platform = "Twitter"
-    
-    def generate_post(self, topic: str) -> Dict:
-        # Conspiracist generuje teorie spiskowe
-        conspiracies = [
-            f"Czy zastanawiales sie KOMU zalezy na {topic}?",
-            f"{topic} to przykrywka dla PRAWDZIWEGO planu",
-            f"Oni nie chca zebys wiedzial prawde o {topic}"
-        ]
-        content = random.choice(conspiracies)
-        
-        # Twitter formatowanie
+    def format_conspiracist(self, content: str, topic) -> str:
         formatted = f"🧵 WATEK: {content} Coincidence? I think NOT! #WakeUp #Truth"
         if len(formatted) > 280:
             formatted = formatted[:277] + "..."
-        
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class ConspiracistFacebookBot:
-    """Conspiracist na Facebooku"""
+        return formatted
     
-    def __init__(self):
-        self.bot_type = "Conspiracist"
-        self.platform = "Facebook"
+    def format_fakenews(self, content: str, topic) -> str:
+        formatted = f"⚠️ {content} RETWEET zanim zcenzuruja! #Breaking #News"
+        if len(formatted) > 280:
+            formatted = formatted[:277] + "..."
+        return formatted
     
-    def generate_post(self, topic: str) -> Dict:
-        # Conspiracist generuje teorie spiskowe (DUPLIKACJA!)
-        conspiracies = [
-            f"Czy zastanawiales sie KOMU zalezy na {topic}?",
-            f"{topic} to przykrywka dla PRAWDZIWEGO planu",
-            f"Oni nie chca zebys wiedzial prawde o {topic}"
-        ]
-        content = random.choice(conspiracies)
-        
-        # Facebook formatowanie
+class FacebookStyle(PlatfromStyle):
+    
+    def format_troll(self, content: str, topic) -> str:
+        formatted = f"{content}... PROSZE SIE OBUDZIC LUDZIE!!! "
+        formatted += "Udostepnij zanim USUNĄ!!! "
+        formatted += "😠😠😠"
+        return formatted
+    
+    def format_spammer(self, content: str, topic) -> str:
+        formatted = f"Moja kuzynka zarobila 5000zl dzieki {topic}!!! "
+        formatted += f"{content} "
+        formatted += "NapiszINFO w komentarzu!!! 💰💰💰"
+        return formatted
+    
+    def format_conspiracist(self, content: str, topic) -> str:
         formatted = f"UDOSTEPNIJ ZANIM USUNA!!!\n\n"
         formatted += f"{content}\n\n"
         formatted += "Mainstream media UKRYWA to przed Toba!!! "
         formatted += "Zrobie researcha!!! 👁️👁️👁️"
-        
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class ConspiracistLinkedInBot:
-    """Conspiracist na LinkedIn"""
+        return formatted
     
-    def __init__(self):
-        self.bot_type = "Conspiracist"
-        self.platform = "LinkedIn"
+    def format_fakenews(self, content: str, topic) -> str:
+        formatted = f"🔴 PILNE 🔴\n\n"
+        formatted += f"{content}\n\n"
+        formatted += "Media MILCZA! Udostepnij swoim znajomym!!! "
+        formatted += "Twoja rodzina MUSI to zobaczyc!!! ⚠️⚠️⚠️"
+        return formatted
     
-    def generate_post(self, topic: str) -> Dict:
-        # Conspiracist generuje teorie spiskowe (ZNOWU!)
-        conspiracies = [
-            f"Czy zastanawiales sie KOMU zalezy na {topic}?",
-            f"{topic} to przykrywka dla PRAWDZIWEGO planu",
-            f"Oni nie chca zebys wiedzial prawde o {topic}"
-        ]
-        content = random.choice(conspiracies)
-        
-        # LinkedIn formatowanie
+class LinkedInStyle(PlatfromStyle):
+    
+    def format_troll(self, content: str, topic) -> str:
+        formatted = f"Unpopular opinion: {content}\n\n"
+        formatted += "I know this might be controversial, but someone had to say it.\n\n"
+        formatted += "Agree? ♻️ Repost to spread awareness\n"
+        formatted += "#ThoughtLeadership #Disruption #Controversial"
+        return formatted
+    
+    def format_spammer(self, content: str, topic) -> str:
+        formatted = f"I'm excited to announce that {content}\n\n"
+        formatted += "This is not financial advice, but my portfolio is up 10000%.\n\n"
+        formatted += "DM me for exclusive insights.\n"
+        formatted += "#Entrepreneurship #Hustle #Blessed"
+        return formatted
+    
+    def format_conspiracist(self, content: str, topic) -> str:
         formatted = f"After 15 years in the industry, I need to share something:\n\n"
         formatted += f"{content}\n\n"
         formatted += "The elites don't want you to know this.\n\n"
         formatted += "Comment 'TRUTH' if you're awake.\n"
         formatted += "#DeepState #FollowTheMoney #QuestionEverything"
-        
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class ConspiracistTikTokBot:
-    """Conspiracist na TikToku"""
+        return formatted
     
-    def __init__(self):
-        self.bot_type = "Conspiracist"
-        self.platform = "TikTok"
-    
-    def generate_post(self, topic: str) -> Dict:
-        # Conspiracist generuje teorie spiskowe (4 RAZ!)
-        conspiracies = [
-            f"Czy zastanawiales sie KOMU zalezy na {topic}?",
-            f"{topic} to przykrywka dla PRAWDZIWEGO planu",
-            f"Oni nie chca zebys wiedzial prawde o {topic}"
-        ]
-        content = random.choice(conspiracies)
-        
-        # TikTok formatowanie
-        formatted = f"wait wait wait... 🤯\n"
-        formatted += f"{content}\n"
-        formatted += "why is this not on the news?? theyre deleting this video in 3...2... 👁️"
-        
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-# ============================================================================
-# FAKENEWS BOTY - szerza dezinformacje
-# ============================================================================
-
-class FakeNewsTwitterBot:
-    """FakeNews na Twitterze"""
-    
-    def __init__(self):
-        self.bot_type = "FakeNews"
-        self.platform = "Twitter"
-    
-    def generate_post(self, topic: str) -> Dict:
-        # FakeNews generuje falszywe wiadomosci
-        fake_news = [
-            f"BREAKING: Naukowcy potwierdzili ze {topic} jest niebezpieczne",
-            f"PILNE: Rzad ukrywa prawde o {topic}",
-            f"SZOK: Ekspert ujawnia co NAPRAWDE kryje sie za {topic}"
-        ]
-        content = random.choice(fake_news)
-        
-        # Twitter formatowanie
-        formatted = f"⚠️ {content} RETWEET zanim zcenzuruja! #Breaking #News"
-        if len(formatted) > 280:
-            formatted = formatted[:277] + "..."
-        
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class FakeNewsFacebookBot:
-    """FakeNews na Facebooku"""
-    
-    def __init__(self):
-        self.bot_type = "FakeNews"
-        self.platform = "Facebook"
-    
-    def generate_post(self, topic: str) -> Dict:
-        # FakeNews generuje falszywe wiadomosci (DUPLIKACJA!)
-        fake_news = [
-            f"BREAKING: Naukowcy potwierdzili ze {topic} jest niebezpieczne",
-            f"PILNE: Rzad ukrywa prawde o {topic}",
-            f"SZOK: Ekspert ujawnia co NAPRAWDE kryje sie za {topic}"
-        ]
-        content = random.choice(fake_news)
-        
-        # Facebook formatowanie
-        formatted = f"🔴 PILNE 🔴\n\n"
-        formatted += f"{content}\n\n"
-        formatted += "Media MILCZA! Udostepnij swoim znajomym!!! "
-        formatted += "Twoja rodzina MUSI to zobaczyc!!! ⚠️⚠️⚠️"
-        
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class FakeNewsLinkedInBot:
-    """FakeNews na LinkedIn"""
-    
-    def __init__(self):
-        self.bot_type = "FakeNews"
-        self.platform = "LinkedIn"
-    
-    def generate_post(self, topic: str) -> Dict:
-        # FakeNews generuje falszywe wiadomosci (ZNOWU!)
-        fake_news = [
-            f"BREAKING: Naukowcy potwierdzili ze {topic} jest niebezpieczne",
-            f"PILNE: Rzad ukrywa prawde o {topic}",
-            f"SZOK: Ekspert ujawnia co NAPRAWDE kryje sie za {topic}"
-        ]
-        content = random.choice(fake_news)
-        
-        # LinkedIn formatowanie
+    def format_fakenews(self, content: str, topic) -> str:
         formatted = f"🚨 Industry Alert 🚨\n\n"
         formatted += f"{content}\n\n"
         formatted += "My sources in the industry have confirmed this.\n\n"
         formatted += "Share with your network before it's too late.\n"
         formatted += "#BreakingNews #IndustryInsider #MustRead"
-        
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class FakeNewsTikTokBot:
-    """FakeNews na TikToku"""
+        return formatted
     
-    def __init__(self):
-        self.bot_type = "FakeNews"
-        self.platform = "TikTok"
+class TikTokStyle(PlatfromStyle):
     
-    def generate_post(self, topic: str) -> Dict:
-        # FakeNews generuje falszywe wiadomosci (4 RAZ!)
-        fake_news = [
-            f"BREAKING: Naukowcy potwierdzili ze {topic} jest niebezpieczne",
-            f"PILNE: Rzad ukrywa prawde o {topic}",
-            f"SZOK: Ekspert ujawnia co NAPRAWDE kryje sie za {topic}"
-        ]
-        content = random.choice(fake_news)
+    def format_troll(self, content: str, topic) -> str:
+        formatted = f"pov: ktos mowi ze {topic} ma sens 💀💀💀\n"
+        formatted += f"bestie... {content}\n"
+        formatted += "its giving delulu 😭 no cap fr fr"
+        return formatted
+    
+    def format_spammer(self, content: str, topic) -> str:
+        formatted = f"ok but why is nobody talking about {topic}?? 🤑\n"
+        formatted += f"{content}\n"
+        formatted += "link in bio bestie trust me im just like you 💅"
+        return formatted
         
-        # TikTok formatowanie
+    
+    def format_conspiracist(self, content: str, topic) -> str:
+        formatted = f"wait wait wait... 🤯\n"
+        formatted += f"{content}\n"
+        formatted += "why is this not on the news?? theyre deleting this video in 3...2... 👁️"
+        return formatted
+    
+    def format_fakenews(self, content: str, topic) -> str:
         formatted = f"STORYTIME: so i just found out something crazy 😱\n"
         formatted += f"{content}\n"
         formatted += "share before they take this down!! part 2 if this blows up 👀"
-        
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-# ============================================================================
-# FUNKCJA POMOCNICZA
-# ============================================================================
-
+        return formatted
+    
 def get_bot(bot_type: str, platform: str):
-    """
-    Zwraca odpowiedniego bota dla danego typu i platformy.
-    
-    SPÓJRZ NA TE IFY! 16 kombinacji! A co jak dodamy Mastodon i Reddit?
-    """
-    if bot_type == "Troll":
-        if platform == "Twitter":
-            return TrollTwitterBot()
-        elif platform == "Facebook":
-            return TrollFacebookBot()
-        elif platform == "LinkedIn":
-            return TrollLinkedInBot()
-        elif platform == "TikTok":
-            return TrollTikTokBot()
-    elif bot_type == "Spammer":
-        if platform == "Twitter":
-            return SpammerTwitterBot()
-        elif platform == "Facebook":
-            return SpammerFacebookBot()
-        elif platform == "LinkedIn":
-            return SpammerLinkedInBot()
-        elif platform == "TikTok":
-            return SpammerTikTokBot()
-    elif bot_type == "Conspiracist":
-        if platform == "Twitter":
-            return ConspiracistTwitterBot()
-        elif platform == "Facebook":
-            return ConspiracistFacebookBot()
-        elif platform == "LinkedIn":
-            return ConspiracistLinkedInBot()
-        elif platform == "TikTok":
-            return ConspiracistTikTokBot()
-    elif bot_type == "FakeNews":
-        if platform == "Twitter":
-            return FakeNewsTwitterBot()
-        elif platform == "Facebook":
-            return FakeNewsFacebookBot()
-        elif platform == "LinkedIn":
-            return FakeNewsLinkedInBot()
-        elif platform == "TikTok":
-            return FakeNewsTikTokBot()
-    
-    raise ValueError(f"Unknown bot_type '{bot_type}' or platform '{platform}'")
+    BOT_CLASSES = {
+        "Troll": TrollBot,
+        "Spammer": SpammerBot,
+        "Conspiracist": ConspiracistBot,
+        "FakeNews": FakeNewsBot
+    }
+    PLATFORM_CLASSES = {
+        "Twitter": TwitterImplementation,
+        "Facebook": FacebookImplementation,
+        "LinkedIn": LinkedInImplementation,
+        "TikTok": TikTokImplementation
+    }
+    try:
+        BotClass = BOT_CLASSES[bot_type]
+    except KeyError:
+        raise ValueError(f"Unknown bot_type '{bot_type}'")
 
+    try:
+        PlatformClass = PLATFORM_CLASSES[platform]
+    except KeyError:
+        raise ValueError(f"Unknown platform '{platform}'")
+
+    return BotClass(PlatformClass())
 
 # Przykladowe uzycie
 if __name__ == "__main__":
