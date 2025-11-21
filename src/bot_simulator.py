@@ -10,7 +10,7 @@ To nie jest skalowalne rozwiazanie...
 """
 from typing import Dict
 import random
-import bot
+from lib.bot import *
 
 # ============================================================================
 # TROLL BOTY - prowokuja klocnie na roznych platformach
@@ -511,14 +511,14 @@ def get_bot(bot_type: str, platform: str):
     
     SPÓJRZ NA TE IFY! 16 kombinacji! A co jak dodamy Mastodon i Reddit?
     """
-    bots: list = bot.Bot.__subclasses__()
-    platforms: list = bot.Platform.__subclasses__()
-    
+    bots: list = Bot.__subclasses__()
+    platforms: list = Platform.__subclasses__()
+
     for p in platforms:
         if p.__name__ == platform:
             for b in bots:
                 if b.__name__ == bot_type:
-                    return b(platform=p)
+                    return b(platform=p())
     
     raise ValueError(f"Unknown bot_type '{bot_type}' or platform '{platform}'")
 
