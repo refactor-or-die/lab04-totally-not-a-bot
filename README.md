@@ -1,3 +1,146 @@
+# Lab 05: Bot Simulator Strikes Back
+
+## Czy wiesz, że...
+Według badań amerykańskich naukowców, 87% studentów po zaimplementowaniu Bridge odkrywa, że testy się nie kompilują. Pozostałe 13% jeszcze nie uruchomiło testów.
+
+## Twoje zadanie
+Tydzień temu zrobiliście piękny Bridge Pattern. 8 klas zamiast 16. Elegancja, Francja, czystość, profesjonalizm.
+
+Potem próbujesz uruchomić testy i...
+
+```
+ImportError: cannot import name 'TrollTwitterBot' from 'bot_simulator'
+```
+
+**Co się stało?** 
+
+Przebiegły prowadzący (czyli ja 😈) napisał testy które:
+1. Importują stare klasy: `from bot_simulator import TrollTwitterBot, SpammerFacebookBot...`
+2. Tworzą obiekty bezpośrednio: `bot = TrollTwitterBot()`
+
+Ale po Bridge takich klas nie ma! Masz tylko `TrollBot` i `Twitter`.
+
+**Rozwiązanie:** Factory Method + pętla do dynamicznego generowania klas!
+
+## Problem do rozwiązania
+
+### Czego wymagają testy?
+```python
+# tests/test_bot_simulator.py
+from bot_simulator import (
+    TrollTwitterBot,      # Ta klasa nie istnieje po Bridge!
+    TrollFacebookBot,     # Ta też nie!
+    SpammerTwitterBot,    # I ta nie!
+    # ... 13 więcej
+)
+
+def test_troll_twitter_info():
+    bot = TrollTwitterBot()  # Tworzy bezpośrednio!
+    assert bot.bot_type == "Troll"
+```
+
+### Co masz po Bridge?
+```python
+# Po Bridge masz tylko:
+class Bot(ABC): ...
+class TrollBot(Bot): ...
+class SpammerBot(Bot): ...
+
+class Platform(ABC): ...
+class Twitter(Platform): ...
+class Facebook(Platform): ...
+```
+
+**Brak:** `TrollTwitterBot`, `SpammerFacebookBot` etc.
+
+## Instrukcja
+
+#### Krok 1: Factory Method
+```python
+def create_bot_adapter(bot_class, platform_class):
+    """Factory Method - generuje klase adaptera"""
+    class BotAdapter:
+        def __init__(self):
+            self._bot = bot_class(platform_class())
+            self.bot_type = self._bot.bot_type
+            self.platform = self._bot.platform
+        
+        def generate_post(self, topic):
+            return self._bot.generate_post(topic)
+    
+    return BotAdapter  # Zwraca KLASE, nie obiekt!
+```
+
+#### Krok 2: Pętla generująca 16 klas
+```python
+bot_types = {
+    "Troll": TrollBot,
+    "Spammer": SpammerBot,
+    "Conspiracist": ConspiracistBot,
+    "FakeNews": FakeNewsBot
+}
+
+platforms = {
+    "Twitter": Twitter,
+    "Facebook": Facebook,
+    "LinkedIn": LinkedIn,
+    "TikTok": TikTok
+}
+
+# Magia!
+for bot_name, bot_class in bot_types.items():
+    for platform_name, platform_class in platforms.items():
+        class_name = f"{bot_name}{platform_name}Bot"
+        globals()[class_name] = create_bot_adapter(bot_class, platform_class)
+```
+
+## Co zyskasz?
+- **20 linii** zamiast 200 linii duplikacji
+- **Automatyczne generowanie** - dodajesz nowego bota? Pętla go obsłuży
+- **Backwards compatibility** - stare testy działają
+- **Brak copy-paste** - jedna definicja adaptera
+
+## FAQ
+
+**Q: Co to jest `globals()`?**
+
+A: Słownik wszystkich zmiennych globalnych w module. `globals()["TrollTwitterBot"] = klasa` to to samo co `TrollTwitterBot = klasa`, ale nazwa może być dynamiczna (string).
+
+**Q: Czy mogę użyć `setattr()` zamiast `globals()`?**
+
+A: Tak! `setattr(sys.modules[__name__], class_name, adapter)` działa identycznie i jest bardziej "Pythonic".
+
+**Q: Dlaczego factory zwraca klasę, a nie obiekt?**
+
+A: Bo testy robią `TrollTwitterBot()` - potrzebują KLASY którą mogą wywołać, nie gotowego obiektu.
+
+**Q: To jest jakaś magia...**
+
+A: To nie jest pytanie, ale tak - to jest trochę magii Pythona. I właśnie dlatego jest eleganckie!
+
+**Q: A co z `type()` do tworzenia klas?**
+
+A: Możesz użyć `type(class_name, (object,), {...})` zamiast closure. Oba podejścia są OK!
+
+**Q: Co jeśli zapomnę dodać nowego bota do `bot_types`?**
+
+A: To dobra obserwacja! Moglibyśmy to też zautomatyzować (introspection, `__subclasses__()`) ale to już byłoby over-engineering dla tego zadania.
+
+**Q: Czy to nie jest zbyt skomplikowane?**
+
+A: Porównaj: 200 linii copy-paste vs 20 linii z pętlą. Co jest bardziej skomplikowane do utrzymania?
+
+**Q: Jav...**
+
+A: Nope.
+
+---
+
+*"Dobry programista pisze kod. Świetny programista pisze kod, który pisze kod."* - Sam Altman (podobno)
+
+**Pro tip:** Factory Method + metaprogramming to potężna kombinacja. Używaj mądrze - z wielką mocą przychodzi wielka odpowiedzialność
+
+
 # Lab 04: Totally Not A Bot
 
 ## Czy wiesz, że...
