@@ -12,7 +12,7 @@ from typing import Dict
 from abc import ABC, abstractmethod
 import random
 
-class PlatfromStyle(ABC):
+class PlatformStyle(ABC):
     @abstractmethod
     def format_troll(self, content: str) -> str:
         pass
@@ -27,7 +27,7 @@ class PlatfromStyle(ABC):
         pass
     
 class PlatformImplementation(ABC):
-    def __init__(self, style: PlatfromStyle):
+    def __init__(self, style: PlatformStyle):
         self.style = style
     
     def format_content(self, content: str, topic: str, bot_type: str) -> str:
@@ -40,49 +40,49 @@ class PlatformImplementation(ABC):
         return formatters[bot_type](content, topic)
         
     @abstractmethod
-    def get_platfrom_name(self) -> str:
+    def get_platform_name(self) -> str:
         pass
     
 class TwitterImplementation(PlatformImplementation):
     def __init__(self):
         super().__init__(TwitterStyle())
     
-    def get_platfrom_name(self):
+    def get_platform_name(self):
         return "Twitter"
     
 class FacebookImplementation(PlatformImplementation):
     def __init__(self):
         super().__init__(FacebookStyle())
     
-    def get_platfrom_name(self):
+    def get_platform_name(self):
         return "Facebook"
     
 class LinkedInImplementation(PlatformImplementation):
     def __init__(self):
         super().__init__(LinkedInStyle())
     
-    def get_platfrom_name(self):
+    def get_platform_name(self):
         return "LinkedIn"  
     
 class TikTokImplementation(PlatformImplementation):
     def __init__(self):
         super().__init__(TikTokStyle())
     
-    def get_platfrom_name(self):
+    def get_platform_name(self):
         return "TikTok"
     
 class SocialMediaBot(ABC):
     def __init__(self, platform: PlatformImplementation):
-        self.platfrom = platform
+        self.platform = platform
     @abstractmethod
     def generate_content(self, topic:str) -> str:
         pass
     def generate_post(self, topic:str) -> Dict:
         content = self.generate_content(topic)
-        formatted_content = self.platfrom.format_content(content, topic, self.bot_type)
+        formatted_content = self.platform.format_content(content, topic, self.bot_type)
         return {
             "bot_type": self.bot_type,
-            "platform": self.platfrom.get_platfrom_name(),
+            "platform": self.platform.get_platform_name(),
             "topic": topic,
             "content": formatted_content
         }
@@ -139,7 +139,7 @@ class FakeNewsBot(SocialMediaBot):
         ]
         return random.choice(fake_news)  
     
-class TwitterStyle(PlatfromStyle):
+class TwitterStyle(PlatformStyle):
     
     def format_troll(self, content: str, topic) -> str:
         formatted = f"{content} ratio + L + niemasz racji"
@@ -166,7 +166,7 @@ class TwitterStyle(PlatfromStyle):
             formatted = formatted[:277] + "..."
         return formatted
     
-class FacebookStyle(PlatfromStyle):
+class FacebookStyle(PlatformStyle):
     
     def format_troll(self, content: str, topic) -> str:
         formatted = f"{content}... PROSZE SIE OBUDZIC LUDZIE!!! "
@@ -194,7 +194,7 @@ class FacebookStyle(PlatfromStyle):
         formatted += "Twoja rodzina MUSI to zobaczyc!!! ⚠️⚠️⚠️"
         return formatted
     
-class LinkedInStyle(PlatfromStyle):
+class LinkedInStyle(PlatformStyle):
     
     def format_troll(self, content: str, topic) -> str:
         formatted = f"Unpopular opinion: {content}\n\n"
@@ -226,7 +226,7 @@ class LinkedInStyle(PlatfromStyle):
         formatted += "#BreakingNews #IndustryInsider #MustRead"
         return formatted
     
-class TikTokStyle(PlatfromStyle):
+class TikTokStyle(PlatformStyle):
     
     def format_troll(self, content: str, topic) -> str:
         formatted = f"pov: ktos mowi ze {topic} ma sens 💀💀💀\n"
@@ -254,29 +254,48 @@ class TikTokStyle(PlatfromStyle):
         return formatted
     
 def get_bot(bot_type: str, platform: str):
-    BOT_CLASSES = {
-        "Troll": TrollBot,
-        "Spammer": SpammerBot,
-        "Conspiracist": ConspiracistBot,
-        "FakeNews": FakeNewsBot
-    }
-    PLATFORM_CLASSES = {
-        "Twitter": TwitterImplementation,
-        "Facebook": FacebookImplementation,
-        "LinkedIn": LinkedInImplementation,
-        "TikTok": TikTokImplementation
-    }
-    try:
-        BotClass = BOT_CLASSES[bot_type]
-    except KeyError:
-        raise ValueError(f"Unknown bot_type '{bot_type}'")
+    class_name = f"{bot_type}{platform}Bot"
 
-    try:
-        PlatformClass = PLATFORM_CLASSES[platform]
-    except KeyError:
-        raise ValueError(f"Unknown platform '{platform}'")
+    if class_name not in globals():
+        raise ValueError(f"Unknown combination: {bot_type} + {platform}")
 
-    return BotClass(PlatformClass())
+    return globals()[class_name]() 
+
+
+def create_bot_adapter(bot_class, platform_class):
+    class BotAdapter:
+        def __init__(self):
+            self._bot = bot_class(platform_class())
+            self.bot_type = self._bot.bot_type
+            self.platform = self._bot.platform.get_platform_name()
+
+        def generate_post(self, topic):
+            return self._bot.generate_post(topic)
+
+    return BotAdapter
+
+
+bot_types = {
+    "Troll": TrollBot,
+    "Spammer": SpammerBot,
+    "Conspiracist": ConspiracistBot,
+    "FakeNews": FakeNewsBot
+}
+
+platforms = {
+    "Twitter": TwitterImplementation,
+    "Facebook": FacebookImplementation,
+    "LinkedIn": LinkedInImplementation,
+    "TikTok": TikTokImplementation
+}
+
+
+for bot_name, bot_class in bot_types.items():
+    for platform_name, platform_class in platforms.items():
+        class_name = f"{bot_name}{platform_name}Bot"
+        globals()[class_name] = create_bot_adapter(bot_class, platform_class)
+
+
 
 # Przykladowe uzycie
 if __name__ == "__main__":
