@@ -195,32 +195,12 @@ class FakeNewsImplementation(BotImplementation):
         return "FakeNews"
 
 
-class TrollTwitterBot:
-
-    def __init__(self):
-        self.bot_type = "Troll"
-        self.platform = "Twitter"
-        self._bot_impl = TrollImplementation()
-        self._platform_impl = TwitterImplementation()
-
-    def generate_post(self, topic: str) -> Dict:
-        content = self._bot_impl.generate_content(topic)
-        formatted = self._platform_impl.format_content(content, self.bot_type)
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class TrollFacebookBot:
-
-    def __init__(self):
-        self.bot_type = "Troll"
-        self.platform = "Facebook"
-        self._bot_impl = TrollImplementation()
-        self._platform_impl = FacebookImplementation()
+class Bot:
+    def __init__(self, bot_implementation: BotImplementation, platform_implementation: PlatformImplementation):
+        self._bot_impl = bot_implementation
+        self._platform_impl = platform_implementation
+        self.bot_type = self._bot_impl.get_bot_type()
+        self.platform = self._platform_impl.get_platform_name()
 
     def generate_post(self, topic: str) -> Dict:
         content = self._bot_impl.generate_content(topic)
@@ -233,310 +213,57 @@ class TrollFacebookBot:
         }
 
 
-class TrollLinkedInBot:
+def create_bot_adapter(bot_class, platform_class):
+    class BotAdapter:
+        def __init__(self):
+            self._bot = Bot(bot_class(), platform_class())
+            self.bot_type = self._bot.bot_type
+            self.platform = self._bot.platform
 
-    def __init__(self):
-        self.bot_type = "Troll"
-        self.platform = "LinkedIn"
-        self._bot_impl = TrollImplementation()
-        self._platform_impl = LinkedInImplementation()
+        def generate_post(self, topic):
+            return self._bot.generate_post(topic)
 
-    def generate_post(self, topic: str) -> Dict:
-        content = self._bot_impl.generate_content(topic)
-        formatted = self._platform_impl.format_content(content, self.bot_type)
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
+    return BotAdapter
 
 
-class TrollTikTokBot:
+bot_types = {
+    "Troll": TrollImplementation,
+    "Spammer": SpammerImplementation,
+    "Conspiracist": ConspiracistImplementation,
+    "FakeNews": FakeNewsImplementation
+}
 
-    def __init__(self):
-        self.bot_type = "Troll"
-        self.platform = "TikTok"
-        self._bot_impl = TrollImplementation()
-        self._platform_impl = TikTokImplementation()
+platforms = {
+    "Twitter": TwitterImplementation,
+    "Facebook": FacebookImplementation,
+    "LinkedIn": LinkedInImplementation,
+    "TikTok": TikTokImplementation
+}
 
-    def generate_post(self, topic: str) -> Dict:
-        content = self._bot_impl.generate_content(topic)
-        formatted = self._platform_impl.format_content(content, self.bot_type)
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class SpammerTwitterBot:
-
-    def __init__(self):
-        self.bot_type = "Spammer"
-        self.platform = "Twitter"
-        self._bot_impl = SpammerImplementation()
-        self._platform_impl = TwitterImplementation()
-
-    def generate_post(self, topic: str) -> Dict:
-        content = self._bot_impl.generate_content(topic)
-        formatted = self._platform_impl.format_content(content, self.bot_type)
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class SpammerFacebookBot:
-
-    def __init__(self):
-        self.bot_type = "Spammer"
-        self.platform = "Facebook"
-        self._bot_impl = SpammerImplementation()
-        self._platform_impl = FacebookImplementation()
-
-    def generate_post(self, topic: str) -> Dict:
-        content = self._bot_impl.generate_content(topic)
-        formatted = self._platform_impl.format_content(content, self.bot_type)
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class SpammerLinkedInBot:
-
-    def __init__(self):
-        self.bot_type = "Spammer"
-        self.platform = "LinkedIn"
-        self._bot_impl = SpammerImplementation()
-        self._platform_impl = LinkedInImplementation()
-
-    def generate_post(self, topic: str) -> Dict:
-        content = self._bot_impl.generate_content(topic)
-        formatted = self._platform_impl.format_content(content, self.bot_type)
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class SpammerTikTokBot:
-
-    def __init__(self):
-        self.bot_type = "Spammer"
-        self.platform = "TikTok"
-        self._bot_impl = SpammerImplementation()
-        self._platform_impl = TikTokImplementation()
-
-    def generate_post(self, topic: str) -> Dict:
-        content = self._bot_impl.generate_content(topic)
-        formatted = self._platform_impl.format_content(content, self.bot_type)
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class ConspiracistTwitterBot:
-
-    def __init__(self):
-        self.bot_type = "Conspiracist"
-        self.platform = "Twitter"
-        self._bot_impl = ConspiracistImplementation()
-        self._platform_impl = TwitterImplementation()
-
-    def generate_post(self, topic: str) -> Dict:
-        content = self._bot_impl.generate_content(topic)
-        formatted = self._platform_impl.format_content(content, self.bot_type)
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class ConspiracistFacebookBot:
-
-    def __init__(self):
-        self.bot_type = "Conspiracist"
-        self.platform = "Facebook"
-        self._bot_impl = ConspiracistImplementation()
-        self._platform_impl = FacebookImplementation()
-
-    def generate_post(self, topic: str) -> Dict:
-        content = self._bot_impl.generate_content(topic)
-        formatted = self._platform_impl.format_content(content, self.bot_type)
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class ConspiracistLinkedInBot:
-
-    def __init__(self):
-        self.bot_type = "Conspiracist"
-        self.platform = "LinkedIn"
-        self._bot_impl = ConspiracistImplementation()
-        self._platform_impl = LinkedInImplementation()
-
-    def generate_post(self, topic: str) -> Dict:
-        content = self._bot_impl.generate_content(topic)
-        formatted = self._platform_impl.format_content(content, self.bot_type)
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class ConspiracistTikTokBot:
-
-    def __init__(self):
-        self.bot_type = "Conspiracist"
-        self.platform = "TikTok"
-        self._bot_impl = ConspiracistImplementation()
-        self._platform_impl = TikTokImplementation()
-
-    def generate_post(self, topic: str) -> Dict:
-        content = self._bot_impl.generate_content(topic)
-        formatted = self._platform_impl.format_content(content, self.bot_type)
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class FakeNewsTwitterBot:
-
-    def __init__(self):
-        self.bot_type = "FakeNews"
-        self.platform = "Twitter"
-        self._bot_impl = FakeNewsImplementation()
-        self._platform_impl = TwitterImplementation()
-
-    def generate_post(self, topic: str) -> Dict:
-        content = self._bot_impl.generate_content(topic)
-        formatted = self._platform_impl.format_content(content, self.bot_type)
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class FakeNewsFacebookBot:
-
-    def __init__(self):
-        self.bot_type = "FakeNews"
-        self.platform = "Facebook"
-        self._bot_impl = FakeNewsImplementation()
-        self._platform_impl = FacebookImplementation()
-
-    def generate_post(self, topic: str) -> Dict:
-        content = self._bot_impl.generate_content(topic)
-        formatted = self._platform_impl.format_content(content, self.bot_type)
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class FakeNewsLinkedInBot:
-
-    def __init__(self):
-        self.bot_type = "FakeNews"
-        self.platform = "LinkedIn"
-        self._bot_impl = FakeNewsImplementation()
-        self._platform_impl = LinkedInImplementation()
-
-    def generate_post(self, topic: str) -> Dict:
-        content = self._bot_impl.generate_content(topic)
-        formatted = self._platform_impl.format_content(content, self.bot_type)
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
-
-
-class FakeNewsTikTokBot:
-
-    def __init__(self):
-        self.bot_type = "FakeNews"
-        self.platform = "TikTok"
-        self._bot_impl = FakeNewsImplementation()
-        self._platform_impl = TikTokImplementation()
-
-    def generate_post(self, topic: str) -> Dict:
-        content = self._bot_impl.generate_content(topic)
-        formatted = self._platform_impl.format_content(content, self.bot_type)
-        return {
-            "bot_type": self.bot_type,
-            "platform": self.platform,
-            "topic": topic,
-            "content": formatted
-        }
+for bot_name, bot_class in bot_types.items():
+    for platform_name, platform_class in platforms.items():
+        class_name = f"{bot_name}{platform_name}Bot"
+        globals()[class_name] = create_bot_adapter(bot_class, platform_class)
 
 
 def get_bot(bot_type: str, platform: str):
-    if bot_type == "Troll":
-        if platform == "Twitter":
-            return TrollTwitterBot()
-        elif platform == "Facebook":
-            return TrollFacebookBot()
-        elif platform == "LinkedIn":
-            return TrollLinkedInBot()
-        elif platform == "TikTok":
-            return TrollTikTokBot()
-    elif bot_type == "Spammer":
-        if platform == "Twitter":
-            return SpammerTwitterBot()
-        elif platform == "Facebook":
-            return SpammerFacebookBot()
-        elif platform == "LinkedIn":
-            return SpammerLinkedInBot()
-        elif platform == "TikTok":
-            return SpammerTikTokBot()
-    elif bot_type == "Conspiracist":
-        if platform == "Twitter":
-            return ConspiracistTwitterBot()
-        elif platform == "Facebook":
-            return ConspiracistFacebookBot()
-        elif platform == "LinkedIn":
-            return ConspiracistLinkedInBot()
-        elif platform == "TikTok":
-            return ConspiracistTikTokBot()
-    elif bot_type == "FakeNews":
-        if platform == "Twitter":
-            return FakeNewsTwitterBot()
-        elif platform == "Facebook":
-            return FakeNewsFacebookBot()
-        elif platform == "LinkedIn":
-            return FakeNewsLinkedInBot()
-        elif platform == "TikTok":
-            return FakeNewsTikTokBot()
-    
+    bot_classes = {
+        "Troll": TrollImplementation,
+        "Spammer": SpammerImplementation,
+        "Conspiracist": ConspiracistImplementation,
+        "FakeNews": FakeNewsImplementation
+    }
+
+    platform_classes = {
+        "Twitter": TwitterImplementation,
+        "Facebook": FacebookImplementation,
+        "LinkedIn": LinkedInImplementation,
+        "TikTok": TikTokImplementation
+    }
+
+    if bot_type in bot_classes and platform in platform_classes:
+        return Bot(bot_classes[bot_type](), platform_classes[platform]())
+
     raise ValueError(f"Unknown bot_type '{bot_type}' or platform '{platform}'")
 
 
