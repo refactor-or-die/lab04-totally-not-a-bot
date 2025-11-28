@@ -156,151 +156,43 @@ class TikTok(Platform):
         formatted += "its giving delulu 😭 no cap fr fr truth szok krejzi storytime 1000x 🤯🤯🤯"
         return formatted
 
+
 # ============================================================================
-# Adaptery do testów
+# Mega Adapter Removal Technique - certified magic
 # ============================================================================
 
-class TrollTwitterBot:   
-    def __init__(self):
-        self.bot = Troll(Twitter())
-        self.bot_type = self.bot.bot_type
-        self.platform = self.bot.platform_type.name
-    
-    def generate_post(self, topic: str) -> Dict:
-        return self.bot.generate_post(topic)       
-class TrollFacebookBot:
-    def __init__(self):
-        self.bot = Troll(Facebook())
-        self.bot_type = self.bot.bot_type
-        self.platform = self.bot.platform_type.name
-
-    def generate_post(self, topic: str) -> Dict:
-        return self.bot.generate_post(topic)
+def create_bot_adapter(bot_class, platform_class):
+    """Factory Method - generuje klase adaptera"""
+    class BotAdapter:
+        def __init__(self):
+            self._bot = bot_class(platform_class())
+            self.bot_type = self._bot.bot_type
+            self.platform = self._bot.platform_type.name
         
-class TrollLinkedInBot:
-    def __init__(self):
-        self.bot = Troll(LinkedIn())
-        self.bot_type = self.bot.bot_type
-        self.platform = self.bot.platform_type.name
-    def generate_post(self, topic: str) -> Dict:
-        return self.bot.generate_post(topic)
+        def generate_post(self, topic):
+            return self._bot.generate_post(topic)
+    
+    return BotAdapter  # Zwraca KLASE !?!??!!??!?!?!?!?!?
 
-class TrollTikTokBot:
-    def __init__(self):
-        self.bot = Troll(TikTok())
-        self.bot_type = self.bot.bot_type
-        self.platform = self.bot.platform_type.name
-    def generate_post(self, topic: str) -> Dict:
-        return self.bot.generate_post(topic)
+bot_types = {
+    "Troll": Troll,
+    "Spammer": Spammer,
+    "Conspiracist": Conspiracist,
+    "FakeNews": FakeNews
+}
 
-class SpammerTwitterBot:    
-    def __init__(self):
-        self.bot = Spammer(Twitter())
-        self.bot_type = self.bot.bot_type
-        self.platform = self.bot.platform_type.name
-    def generate_post(self, topic: str) -> Dict:
-        return self.bot.generate_post(topic)
+platforms = {
+    "Twitter": Twitter,
+    "Facebook": Facebook,
+    "LinkedIn": LinkedIn,
+    "TikTok": TikTok
+}
 
-
-
-class SpammerFacebookBot:    
-    def __init__(self):
-        self.bot = Spammer(Facebook())
-        self.bot_type = self.bot.bot_type
-        self.platform = self.bot.platform_type.name
-    def generate_post(self, topic: str) -> Dict:
-        return self.bot.generate_post(topic)
-
-
-
-class SpammerLinkedInBot:    
-    def __init__(self):
-        self.bot = Spammer(LinkedIn())
-        self.bot_type = self.bot.bot_type
-        self.platform = self.bot.platform_type.name
-    def generate_post(self, topic: str) -> Dict:
-        return self.bot.generate_post(topic)
-
-
-
-class SpammerTikTokBot:   
-    def __init__(self):
-        self.bot = Spammer(TikTok())
-        self.bot_type = self.bot.bot_type
-        self.platform = self.bot.platform_type.name
-    def generate_post(self, topic: str) -> Dict:
-        return self.bot.generate_post(topic)
-
-
-class ConspiracistTwitterBot:   
-    def __init__(self):
-        self.bot = Conspiracist(Twitter())
-        self.bot_type = self.bot.bot_type
-        self.platform = self.bot.platform_type.name
-    def generate_post(self, topic: str) -> Dict:
-        return self.bot.generate_post(topic)
-
-
-class ConspiracistFacebookBot:    
-    def __init__(self):
-        self.bot = Conspiracist(Facebook())
-        self.bot_type = self.bot.bot_type
-        self.platform = self.bot.platform_type.name
-    def generate_post(self, topic: str) -> Dict:
-        return self.bot.generate_post(topic)
-
-
-class ConspiracistLinkedInBot:   
-    def __init__(self):
-        self.bot = Conspiracist(LinkedIn())
-        self.bot_type = self.bot.bot_type
-        self.platform = self.bot.platform_type.name
-    def generate_post(self, topic: str) -> Dict:
-        return self.bot.generate_post(topic)
-
-
-class ConspiracistTikTokBot:    
-    def __init__(self):
-        self.bot = Conspiracist(TikTok())
-        self.bot_type = self.bot.bot_type
-        self.platform = self.bot.platform_type.name
-    def generate_post(self, topic: str) -> Dict:
-        return self.bot.generate_post(topic)
-
-class FakeNewsTwitterBot:    
-    def __init__(self):
-        self.bot = FakeNews(Twitter())
-        self.bot_type = self.bot.bot_type
-        self.platform = self.bot.platform_type.name
-    def generate_post(self, topic: str) -> Dict:
-        return self.bot.generate_post(topic)
-
-
-class FakeNewsFacebookBot:    
-    def __init__(self):
-        self.bot = FakeNews(Facebook())
-        self.bot_type = self.bot.bot_type
-        self.platform = self.bot.platform_type.name
-    def generate_post(self, topic: str) -> Dict:
-        return self.bot.generate_post(topic)
-
-class FakeNewsLinkedInBot:   
-    def __init__(self):
-        self.bot = FakeNews(LinkedIn())
-        self.bot_type = self.bot.bot_type
-        self.platform = self.bot.platform_type.name
-    def generate_post(self, topic: str) -> Dict:
-        return self.bot.generate_post(topic)
-
-
-class FakeNewsTikTokBot:
-    def __init__(self):
-        self.bot = FakeNews(TikTok())
-        self.bot_type = self.bot.bot_type
-        self.platform = self.bot.platform_type.name
-    def generate_post(self, topic: str) -> Dict:
-        return self.bot.generate_post(topic)
-
+# Magia!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+for bot_name, bot_class in bot_types.items():
+    for platform_name, platform_class in platforms.items():
+        class_name = f"{bot_name}{platform_name}Bot"
+        globals()[class_name] = create_bot_adapter(bot_class, platform_class)
 
 # ============================================================================
 # FUNKCJA POMOCNICZA
