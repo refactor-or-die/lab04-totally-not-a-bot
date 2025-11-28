@@ -1,11 +1,11 @@
 """
 Symulator botow internetowych (w celach edukacyjnych!).
 UWAGA: Ten kod został zrefaktoryzowany przy użyciu wzorca Bridge.
+Dodano Dynamic Class Generation dla kompatybilności wstecznej.
 """
 from typing import Dict
 import random
 from abc import ABC, abstractmethod
-
 
 class Platform(ABC):
     @property
@@ -28,7 +28,6 @@ class Platform(ABC):
     @abstractmethod
     def format_fakenews(self, content: str, topic: str) -> str:
         pass
-
 
 class Twitter(Platform):
     name = "Twitter"
@@ -58,7 +57,6 @@ class Twitter(Platform):
             formatted = formatted[:277] + "..."
         return formatted
 
-
 class Facebook(Platform):
     name = "Facebook"
 
@@ -87,7 +85,6 @@ class Facebook(Platform):
         formatted += "Media MILCZA! Udostepnij swoim znajomym!!! "
         formatted += "Twoja rodzina MUSI to zobaczyc!!! ⚠️⚠️⚠️"
         return formatted
-
 
 class LinkedIn(Platform):
     name = "LinkedIn"
@@ -122,7 +119,6 @@ class LinkedIn(Platform):
         formatted += "#BreakingNews #IndustryInsider #MustRead"
         return formatted
 
-
 class TikTok(Platform):
     name = "TikTok"
 
@@ -150,8 +146,6 @@ class TikTok(Platform):
         formatted += "share before they take this down!! part 2 if this blows up 👀"
         return formatted
 
-
-
 class Bot(ABC):
     def __init__(self, platform: Platform):
         self._platform_impl = platform
@@ -176,14 +170,12 @@ class Bot(ABC):
         """Główna metoda publiczna (Template Method)"""
         raw_content = self._generate_content(topic)
         formatted_content = self._format_content(raw_content, topic)
-
         return {
             "bot_type": self.bot_type,
             "platform": self.platform,
             "topic": topic,
             "content": formatted_content
         }
-
 
 class TrollBot(Bot):
     def __init__(self, platform: Platform):
@@ -201,7 +193,6 @@ class TrollBot(Bot):
     def _format_content(self, raw_content: str, topic: str) -> str:
         return self._platform_impl.format_troll(raw_content, topic)
 
-
 class SpammerBot(Bot):
     def __init__(self, platform: Platform):
         super().__init__(platform)
@@ -217,7 +208,6 @@ class SpammerBot(Bot):
 
     def _format_content(self, raw_content: str, topic: str) -> str:
         return self._platform_impl.format_spammer(raw_content, topic)
-
 
 class ConspiracistBot(Bot):
     def __init__(self, platform: Platform):
@@ -235,7 +225,6 @@ class ConspiracistBot(Bot):
     def _format_content(self, raw_content: str, topic: str) -> str:
         return self._platform_impl.format_conspiracist(raw_content, topic)
 
-
 class FakeNewsBot(Bot):
     def __init__(self, platform: Platform):
         super().__init__(platform)
@@ -252,122 +241,57 @@ class FakeNewsBot(Bot):
     def _format_content(self, raw_content: str, topic: str) -> str:
         return self._platform_impl.format_fakenews(raw_content, topic)
 
-class TrollTwitterBot(TrollBot):
-    def __init__(self): super().__init__(Twitter())
+def create_bot_adapter(bot_class, platform_class):
 
+    class BotAdapter:
+        def __init__(self):
 
-class TrollFacebookBot(TrollBot):
-    def __init__(self): super().__init__(Facebook())
+            self._bot = bot_class(platform_class())
 
+            self.bot_type = self._bot.bot_type
+            self.platform = self._bot.platform
 
-class TrollLinkedInBot(TrollBot):
-    def __init__(self): super().__init__(LinkedIn())
+        def generate_post(self, topic):
 
+            return self._bot.generate_post(topic)
 
-class TrollTikTokBot(TrollBot):
-    def __init__(self): super().__init__(TikTok())
+    return BotAdapter
 
+bot_types_map = {
+    "Troll": TrollBot,
+    "Spammer": SpammerBot,
+    "Conspiracist": ConspiracistBot,
+    "FakeNews": FakeNewsBot
+}
 
-class SpammerTwitterBot(SpammerBot):
-    def __init__(self): super().__init__(Twitter())
+platforms_map = {
+    "Twitter": Twitter,
+    "Facebook": Facebook,
+    "LinkedIn": LinkedIn,
+    "TikTok": TikTok
+}
 
-
-class SpammerFacebookBot(SpammerBot):
-    def __init__(self): super().__init__(Facebook())
-
-
-class SpammerLinkedInBot(SpammerBot):
-    def __init__(self): super().__init__(LinkedIn())
-
-
-class SpammerTikTokBot(SpammerBot):
-    def __init__(self): super().__init__(TikTok())
-
-
-class ConspiracistTwitterBot(ConspiracistBot):
-    def __init__(self): super().__init__(Twitter())
-
-
-class ConspiracistFacebookBot(ConspiracistBot):
-    def __init__(self): super().__init__(Facebook())
-
-
-class ConspiracistLinkedInBot(ConspiracistBot):
-    def __init__(self): super().__init__(LinkedIn())
-
-
-class ConspiracistTikTokBot(ConspiracistBot):
-    def __init__(self): super().__init__(TikTok())
-
-
-class FakeNewsTwitterBot(FakeNewsBot):
-    def __init__(self): super().__init__(Twitter())
-
-
-class FakeNewsFacebookBot(FakeNewsBot):
-    def __init__(self): super().__init__(Facebook())
-
-
-class FakeNewsLinkedInBot(FakeNewsBot):
-    def __init__(self): super().__init__(LinkedIn())
-
-
-class FakeNewsTikTokBot(FakeNewsBot):
-    def __init__(self): super().__init__(TikTok())
+for bot_name, bot_class in bot_types_map.items():
+    for platform_name, platform_class in platforms_map.items():
+        class_name = f"{bot_name}{platform_name}Bot"
+        adapter_class = create_bot_adapter(bot_class, platform_class)
+        globals()[class_name] = adapter_class
 
 
 def get_bot(bot_type: str, platform: str):
-    """
-    Zwraca odpowiedniego bota.
-    Musi zwracać instancje starych klas, aby przejść testy `isinstance`.
-    """
-    if bot_type == "Troll":
-        if platform == "Twitter":
-            return TrollTwitterBot()
-        elif platform == "Facebook":
-            return TrollFacebookBot()
-        elif platform == "LinkedIn":
-            return TrollLinkedInBot()
-        elif platform == "TikTok":
-            return TrollTikTokBot()
 
-    elif bot_type == "Spammer":
-        if platform == "Twitter":
-            return SpammerTwitterBot()
-        elif platform == "Facebook":
-            return SpammerFacebookBot()
-        elif platform == "LinkedIn":
-            return SpammerLinkedInBot()
-        elif platform == "TikTok":
-            return SpammerTikTokBot()
+    expected_class_name = f"{bot_type}{platform}Bot"
 
-    elif bot_type == "Conspiracist":
-        if platform == "Twitter":
-            return ConspiracistTwitterBot()
-        elif platform == "Facebook":
-            return ConspiracistFacebookBot()
-        elif platform == "LinkedIn":
-            return ConspiracistLinkedInBot()
-        elif platform == "TikTok":
-            return ConspiracistTikTokBot()
-
-    elif bot_type == "FakeNews":
-        if platform == "Twitter":
-            return FakeNewsTwitterBot()
-        elif platform == "Facebook":
-            return FakeNewsFacebookBot()
-        elif platform == "LinkedIn":
-            return FakeNewsLinkedInBot()
-        elif platform == "TikTok":
-            return FakeNewsTikTokBot()
-
-    raise ValueError(f"Unknown bot_type '{bot_type}' or platform '{platform}'")
-
+    if expected_class_name in globals():
+        bot_instance = globals()[expected_class_name]()
+        return bot_instance
+    else:
+        raise ValueError(f"Unknown bot_type '{bot_type}' or platform '{platform}'")
 
 if __name__ == "__main__":
     print("=" * 60)
     print("SYMULATOR BOTOW INTERNETOWYCH")
-    print("(Refaktoryzacja: BRIDGE PATTERN)")
+    print("(Refaktoryzacja: BRIDGE PATTERN + DYNAMIC CLASSES)")
     print("=" * 60)
 
     random.seed(42)
@@ -382,7 +306,9 @@ if __name__ == "__main__":
         print("=" * 60)
 
         for platform in platforms:
+            # Teraz get_bot używa dynamicznie wygenerowanych klas
             bot = get_bot(bot_type, platform)
+
             topic = random.choice(topics)
             result = bot.generate_post(topic)
 
