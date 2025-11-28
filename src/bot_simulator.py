@@ -2,6 +2,8 @@
 Symulator botow internetowych (w celach edukacyjnych!).
 Implementacja wzorca Bridge.
 """
+
+#factory method  + petle do generowania adapterow
 from typing import Dict
 import random
 from abc import ABC, abstractmethod
@@ -15,7 +17,7 @@ class Platform(ABC):
 # Abstrakcja (CO generuje)
 class Bot(ABC):
     def __init__(self, platform: Platform):
-        self.platform = platform  # <-- TO JEST MOST!
+        self.platform = platform
     
     @abstractmethod
     def generate_content(self, topic: str) -> str:
@@ -23,12 +25,16 @@ class Bot(ABC):
     
     def generate_post(self, topic: str) -> Dict:
         content = self.generate_content(topic)
-        formatted = self.platform.format_message(content)
+        message = self.platform.format_message(content)
+
+        if hasattr(self.platform, "format_post"):
+            message = self.platform.format_post(message)
+
         return {
             "bot_type": self.__class__.__name__,
             "platform": self.platform.__class__.__name__,
             "topic": topic,
-            "content": formatted
+            "content": message
         }
 
 # Platformy
@@ -39,13 +45,32 @@ class Twitter(Platform):
             formatted = message[:277-len(" #triggered")] + "... #triggered"
         return formatted
 
-class Tiktok(Platform):
+    def format_post(self, text: str) -> str:
+        if "conspiracy" in text.lower() or "government" in text.lower():
+            text = "🧵 " + text
+        if "ALERT" in text or "insider" in text:
+            text = "⚠️ " + text
+        return text
+
+class TikTok(Platform):
     def format_message(self, message: str) -> str:
         return f"bestie... {message}\nits giving delulu 😭 no cap fr fr"
+
+    def format_post(self, text: str) -> str:
+        if "ALERT" in text or "insider" in text:
+            text = "storytime... " + text
+        return text
 
 class Facebook(Platform):
     def format_message(self, message: str) -> str:
         return f"{message}... PROSZE SIE OBUDZIC LUDZIE!!! Udostepnij zanim USUNĄ!!! 😠😠😠"
+
+    def format_post(self, text: str) -> str:
+        if "🚀" in text or "dm me" in text.lower():
+            text = text + " (mój kuzynka też potwierdziła)"
+        if "ALERT" in text:
+            text = "PILNE! " + text
+        return text
 
 class LinkedIn(Platform):
     def format_message(self, message: str) -> str:
@@ -54,47 +79,87 @@ class LinkedIn(Platform):
                 "🚀🚀🚀 Agree? ♻️ Repost to spread awareness\n"
                 "#ThoughtLeadership #Disruption #Controversial")
 
-# Boty - deterministyczne treści spełniające wszystkie testy
+    def format_post(self, text: str) -> str:
+        if "dm me" in text.lower() or "🚀" in text:
+            text = "ANNOUNCEMENT: " + text
+        return text
+
+
 class Troll(Bot):
     def generate_content(self, topic: str) -> str:
-        # "Serio wierzysz w {topic}?" + "SERIO" dla różnych testów
-        return f"Serio wierzysz w {topic}? SERIO!"
+        texts = [
+            f"Serio wierzysz w {topic}? SERIO!",
+            f"Nie masz pojecia o {topic}, ratio incoming.",
+            f"{topic}? przekret jakich malo.",
+        ]
+        return random.choice(texts)
 
 class Spammer(Bot):
     def generate_content(self, topic: str) -> str:
-        return f"NOWY {topic} COIN! Zarobiles na {topic}? JA TAK! 1000x gwarantowane!"
+        texts = [
+            f"NOWY {topic.upper()} COIN! Zarobilem 1000x GUARANTEED 🚀",
+            f"Chcesz zarobic na {topic}? LINK IN BIO!!",
+            f"{topic} to MOON 🚀🚀🚀 DM ME!",
+        ]
+        return random.choice(texts)
 
 class Conspiracist(Bot):
     def generate_content(self, topic: str) -> str:
-        return f"Czy zastanawiales sie KOMU zalezy na {topic}? Oni ukrywa prawde!"
+        texts = [
+            f"Czy zastanawiales sie KOMU zalezy na {topic}? Oni ukrywaja prawde!",
+            f"{topic}? coincidence? I THINK NOT 🧵",
+            f"Wake up! {topic} to ich plan! 👁️",
+        ]
+        return random.choice(texts)
 
 class FakeNews(Bot):
     def generate_content(self, topic: str) -> str:
-        return f"BREAKING: Naukowcy potwierdzili ze {topic} jest niebezpieczne PILNE!!"
+        texts = [
+            f"BREAKING: {topic} potwierdzony przez naukowcow ⚠️",
+            f"SZOK! {topic} jest bardziej niebezpieczne niz myslelismy!",
+            f"ALERT! {topic} confirmed przez insidera!",
+        ]
+        return random.choice(texts)
 
-def get_bot(bot_type: str, platform: str) -> Bot:
-    if bot_type not in ["Troll", "Spammer", "Conspiracist", "FakeNews"]:
-        raise ValueError(f"Unknown bot_type '{bot_type}' or platform '{platform}'")
-    if platform not in ["Twitter", "Facebook", "LinkedIn", "TikTok"]:
-        raise ValueError(f"Unknown bot_type '{bot_type}' or platform '{platform}'")
-    
-    platform_instance = {
-        "Twitter": Twitter(),
-        "Facebook": Facebook(),
-        "LinkedIn": LinkedIn(),
-        "TikTok": Tiktok()
-    }[platform]
-    
-    bot_instance = {
-        "Troll": Troll(platform_instance),
-        "Spammer": Spammer(platform_instance),
-        "Conspiracist": Conspiracist(platform_instance),
-        "FakeNews": FakeNews(platform_instance)
-    }[bot_type]
-    
-    return bot_instance
 
-# Przykladowe uzycie
+def create_bot_adapter(bot_class, platform_class):
+    class BotAdapter:
+        def __init__(self):
+            self._bot = bot_class(platform_class())
+            self.bot_type = bot_class.__name__
+            self.platform = platform_class.__name__
+
+        def generate_post(self, topic: str):
+            return self._bot.generate_post(topic)
+
+    return BotAdapter
+
+BOT_TYPES = {
+    "Troll": Troll,
+    "Spammer": Spammer,
+    "Conspiracist": Conspiracist,
+    "FakeNews": FakeNews
+}
+
+PLATFORMS = {
+    "Twitter": Twitter,
+    "Facebook": Facebook,
+    "LinkedIn": LinkedIn,
+    "TikTok": TikTok
+}
+
+for bot_name, bot_class in BOT_TYPES.items():
+    for platform_name, platform_class in PLATFORMS.items():
+        class_name = f"{bot_name}{platform_name}Bot"   # <--
+        globals()[class_name] = create_bot_adapter(bot_class, platform_class)
+
+def get_bot(bot_type: str, platform: str):
+    class_name = f"{bot_type}{platform}Bot"
+    if class_name not in globals():
+        raise ValueError(f"Unknown bot_type '{bot_type}' or platform '{platform}'")
+    return globals()[class_name]()
+
+
 if __name__ == "__main__":
     print("=" * 60)
     print("SYMULATOR BOTOW INTERNETOWYCH")
