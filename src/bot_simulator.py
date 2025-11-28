@@ -11,6 +11,7 @@ To nie jest skalowalne rozwiazanie...
 
 from abc import ABC, abstractmethod
 from typing import Dict
+import functools
 import random
 
 
@@ -32,7 +33,7 @@ class Bot(ABC):
 
     @property
     @abstractmethod
-    def platform(self) -> Platform:
+    def platform(self) -> str:
         pass
 
     @abstractmethod
@@ -47,8 +48,8 @@ class TrollBot(Bot):
         self._platform = platform
 
     @property
-    def platform(self) -> Platform:
-        return self._platform
+    def platform(self) -> str:
+        return self._platform.get_name()
 
     @property
     def bot_type(self) -> str:
@@ -63,9 +64,9 @@ class TrollBot(Bot):
         content = random.choice(provocations)
         return {
             "bot_type": self.bot_type,
-            "platform": self.platform.get_name(),
+            "platform": self.platform,
             "topic": topic,
-            "content": self.platform.format_message(topic, content),
+            "content": self._platform.format_message(topic, content),
         }
 
 
@@ -78,8 +79,8 @@ class SpammerBot(Bot):
         return "Spammer"
 
     @property
-    def platform(self) -> Platform:
-        return self._platform
+    def platform(self) -> str:
+        return self._platform.get_name()
 
     def generate_post(self, topic: str) -> dict:
         spam_templates = [
@@ -90,9 +91,9 @@ class SpammerBot(Bot):
         content = random.choice(spam_templates)
         return {
             "bot_type": self.bot_type,
-            "platform": self.platform.get_name(),
+            "platform": self.platform,
             "topic": topic,
-            "content": self.platform.format_message(topic, content),
+            "content": self._platform.format_message(topic, content),
         }
 
 
@@ -105,21 +106,21 @@ class ConspiracistBot(Bot):
         return "Conspiracist"
 
     @property
-    def platform(self) -> Platform:
-        return self._platform
+    def platform(self) -> str:
+        return self._platform.get_name()
 
     def generate_post(self, topic: str) -> dict:
         conspiracies = [
-            f"Czy zastanawiales sie KOMU zalezy na {topic}?",
+            f"Czy zastanawiales sie KOMU zalezy na {topic}? Coincidence?",
             f"{topic} to przykrywka dla PRAWDZIWEGO planu",
             f"Oni nie chca zebys wiedzial prawde o {topic}",
         ]
         content = random.choice(conspiracies)
         return {
             "bot_type": self.bot_type,
-            "platform": self.platform.get_name(),
+            "platform": self.platform,
             "topic": topic,
-            "content": self.platform.format_message(topic, content),
+            "content": self._platform.format_message(topic, content),
         }
 
 
@@ -132,8 +133,8 @@ class FakeNewsBot(Bot):
         return "FakeNews"
 
     @property
-    def platform(self) -> Platform:
-        return self._platform
+    def platform(self) -> str:
+        return self._platform.get_name()
 
     def generate_post(self, topic: str) -> dict:
         fake_news = [
@@ -144,9 +145,9 @@ class FakeNewsBot(Bot):
         content = random.choice(fake_news)
         return {
             "bot_type": self.bot_type,
-            "platform": self.platform.get_name(),
+            "platform": self.platform,
             "topic": topic,
-            "content": self.platform.format_message(topic, content),
+            "content": self._platform.format_message(topic, content),
         }
 
 
@@ -155,7 +156,7 @@ class TwitterPlatform(Platform):
         return "Twitter"
 
     def format_message(self, topic: str, content: str) -> str:
-        formatted = f"{content} ratio + L + niemasz racji"
+        formatted = f"🚀🧵⚠️ {content} ratio + L + niemasz racji"
         if len(formatted) > 280:
             formatted = formatted[:277] + "..."
         formatted += " #triggered"
@@ -168,7 +169,7 @@ class FacebookPlatform(Platform):
 
     def format_message(self, topic: str, content: str) -> str:
         # Facebook formatuje inaczej
-        formatted = f"{content}... PROSZE SIE OBUDZIC LUDZIE!!! "
+        formatted = f"🔴 INFO {content}... PROSZE SIE OBUDZIC LUDZIE!!! "
         formatted += "Udostepnij zanim USUNĄ!!! "
         formatted += "😠😠😠"
         return formatted
@@ -180,7 +181,7 @@ class LinkedInPlatform(Platform):
 
     def format_message(self, topic: str, content: str) -> str:
         # LinkedIn formatuje "profesjonalnie"
-        formatted = f"Unpopular opinion: {content}\n\n"
+        formatted = f"Unpopular excited opinion: {content}\n\n"
         formatted += (
             "I know this might be controversial, but someone had to say it.\n\n"
         )
@@ -196,11 +197,48 @@ class TikTokPlatform(Platform):
 
     def format_message(self, topic: str, content: str) -> str:
         # TikTok formatuje w stylu GenZ
-        formatted = f"pov: ktos mowi ze {topic} ma sens 💀💀💀\n"
-        formatted += f"bestie... {content}\n"
+        formatted = f"👁️ pov: ktos mowi ze {topic} ma sens 💀💀💀\n"
+        formatted += f"storytime bestie... {content}\n"
         formatted += "its giving delulu 😭 no cap fr fr"
 
         return formatted
+
+
+@functools.cache
+def create_bot_adapter(bot_class, platform_class):
+    """Factory Method - generuje klase adaptera"""
+
+    class BotAdapter(Bot):
+        def __init__(self):
+            self._bot = bot_class(platform_class())
+
+        @property
+        def bot_type(self) -> str:
+            return self._bot.bot_type
+
+        @property
+        def platform(self) -> str:
+            return self._bot.platform
+
+        def generate_post(self, topic):
+            return self._bot.generate_post(topic)
+
+    return BotAdapter
+
+
+bot_types = {
+    "Troll": TrollBot,
+    "Spammer": SpammerBot,
+    "Conspiracist": ConspiracistBot,
+    "FakeNews": FakeNewsBot,
+}
+
+platforms = {
+    "Twitter": TwitterPlatform,
+    "Facebook": FacebookPlatform,
+    "LinkedIn": LinkedInPlatform,
+    "TikTok": TikTokPlatform,
+}
 
 
 def get_bot(bot_type: str, platform: str) -> Bot:
@@ -210,31 +248,31 @@ def get_bot(bot_type: str, platform: str) -> Bot:
     SPÓJRZ NA TE IFY! 16 kombinacji! A co jak dodamy Mastodon i Reddit?
     """
 
-    if platform == "Twitter":
-        plat = TwitterPlatform()
-    elif platform == "Facebook":
-        plat = FacebookPlatform()
-    elif platform == "LinkedIn":
-        plat = LinkedInPlatform()
-    elif platform == "TikTok":
-        plat = TikTokPlatform()
-    else:
-        raise ValueError(f"Unknown platform '{platform}'")
+    try:
+        bot = bot_types[bot_type]
+    except KeyError:
+        raise ValueError(f"Invalid bot type: '{bot_type}'")
 
-    if bot_type == "Troll":
-        return TrollBot(plat)
-    elif bot_type == "Spammer":
-        return SpammerBot(plat)
-    elif bot_type == "Conspiracist":
-        return ConspiracistBot(plat)
-    elif bot_type == "FakeNews":
-        return FakeNewsBot(plat)
-    else:
-        raise ValueError(f"Unknown bot_type '{bot_type}'")
+    try:
+        plat = platforms[platform]
+    except KeyError:
+        raise ValueError(f"Invalid platform: '{platform}'")
+
+    BotAdapter = create_bot_adapter(bot, plat)
+
+    return BotAdapter()
+
+
+# Magia!
+for bot_name, bot_class in bot_types.items():
+    for platform_name, platform_class in platforms.items():
+        class_name = f"{bot_name}{platform_name}Bot"
+        print(class_name)
+        globals()[class_name] = create_bot_adapter(bot_class, platform_class)
 
 
 # Przykladowe uzycie
-if __name__ == "__main__":
+def main():
     print("=" * 60)
     print("SYMULATOR BOTOW INTERNETOWYCH")
     print("(w celach edukacyjnych!)")
@@ -260,3 +298,7 @@ if __name__ == "__main__":
             print(f"\n[{platform}] Temat: {topic}")
             print("-" * 40)
             print(result["content"])
+
+
+if __name__ == "__main__":
+    main()
