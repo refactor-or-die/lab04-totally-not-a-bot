@@ -194,6 +194,18 @@ for bot_name, bot_class in bot_types.items():
         class_name = f"{bot_name}{platform_name}Bot"
         globals()[class_name] = create_bot_adapter(bot_class, platform_class)
 
+# ============================================================================
+# FUNKCJA POMOCNICZA
+# ============================================================================
+
+def get_bot(bot_type: str, platform: str):
+    class_name = f"{bot_type}{platform}Bot"
+
+    if class_name not in globals():
+        raise ValueError(f"Unknown bot_type '{bot_type}' or platform '{platform}'")
+
+    return globals()[class_name]()
+
 
 # Przykladowe uzycie
 if __name__ == "__main__":
