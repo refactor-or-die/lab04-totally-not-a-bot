@@ -194,55 +194,6 @@ for bot_name, bot_class in bot_types.items():
         class_name = f"{bot_name}{platform_name}Bot"
         globals()[class_name] = create_bot_adapter(bot_class, platform_class)
 
-# ============================================================================
-# FUNKCJA POMOCNICZA
-# ============================================================================
-
-def get_bot(bot_type: str, platform: str):
-    """
-    Zwraca odpowiedniego bota dla danego typu i platformy.
-    
-    SPÓJRZ NA TE IFY! 16 kombinacji! A co jak dodamy Mastodon i Reddit?
-    """
-    if bot_type == "Troll":
-        if platform == "Twitter":
-            return TrollTwitterBot()
-        elif platform == "Facebook":
-            return TrollFacebookBot()
-        elif platform == "LinkedIn":
-            return TrollLinkedInBot()
-        elif platform == "TikTok":
-            return TrollTikTokBot()
-    elif bot_type == "Spammer":
-        if platform == "Twitter":
-            return SpammerTwitterBot()
-        elif platform == "Facebook":
-            return SpammerFacebookBot()
-        elif platform == "LinkedIn":
-            return SpammerLinkedInBot()
-        elif platform == "TikTok":
-            return SpammerTikTokBot()
-    elif bot_type == "Conspiracist":
-        if platform == "Twitter":
-            return ConspiracistTwitterBot()
-        elif platform == "Facebook":
-            return ConspiracistFacebookBot()
-        elif platform == "LinkedIn":
-            return ConspiracistLinkedInBot()
-        elif platform == "TikTok":
-            return ConspiracistTikTokBot()
-    elif bot_type == "FakeNews":
-        if platform == "Twitter":
-            return FakeNewsTwitterBot()
-        elif platform == "Facebook":
-            return FakeNewsFacebookBot()
-        elif platform == "LinkedIn":
-            return FakeNewsLinkedInBot()
-        elif platform == "TikTok":
-            return FakeNewsTikTokBot()
-    
-    raise ValueError(f"Unknown bot_type '{bot_type}' or platform '{platform}'")
-
 
 # Przykladowe uzycie
 if __name__ == "__main__":
