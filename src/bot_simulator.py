@@ -17,17 +17,12 @@ import random
 # ============================================================================
 
 class Bot(ABC):
-    @abstractmethod
     def __init__(self, platform):
-        self.platform = platform
+        self.platform_type = platform
         self.bot_type = __class__.__name__
-        pass
 
     @abstractmethod
     def generate_post(self, topic: str) -> Dict:
-        pass
-        
-    def generate_post(self, content: str) -> Dict:
         pass
     
 
