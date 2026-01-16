@@ -1,0 +1,693 @@
+\documentclass[aspectratio=169]{beamer}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{polski}
+\usepackage{lmodern}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,positioning}
+
+\usetheme{Madrid}
+\usecolortheme{default}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue},
+    stringstyle=\color{red},
+    commentstyle=\color{gray},
+    showstringspaces=false,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    literate={@}{{@}}1 {\#}{{\#}}1
+}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}{}
+
+\title{Factory Method}
+\subtitle{czyli jak przechytrzyć wrednego prowadzącego}
+\author{Wzorce projektowe -- laboratorium}
+\date{}
+
+\begin{document}
+
+\frame{\titlepage}
+
+\begin{frame}{Czym jest Factory Method? -- Analogia}
+\begin{center}
+\Large
+Wyobraź sobie świat bez fabryk...
+\end{center}
+
+\vspace{0.5cm}
+
+\begin{itemize}
+    \item Chcesz samochód? Musisz wiedzieć JAK zbudować samochód
+    \item Chcesz komputer? Musisz wiedzieć JAK zbudować komputer
+    \item Chcesz AGD? Musisz znać 20 sposobów konstrukcji sprzętu
+\end{itemize}
+
+\pause
+
+\vspace{0.5cm}
+
+\textbf{Nagle powstaje fabryka samochodów!}
+\begin{itemize}
+    \item Zamawiasz w fabryce samochód
+    \item Fabryka wie JAK go zbudować
+    \item Ty dostajesz gotowy samochód
+    \item Nie musisz znać szczegółów produkcji!
+\end{itemize}
+
+\vspace{0.5cm}
+
+\textbf{Factory Method = metoda która wie JAK tworzyć rzeczy za Ciebie}
+\end{frame}
+
+\begin{frame}{Factory Method w programowaniu}
+\begin{center}
+\Large
+\textbf{Zwykłe tworzenie obiektu:}
+\end{center}
+
+\vspace{0.3cm}
+
+\begin{itemize}
+    \item Ty wiesz wszystkie szczegóły: ,,new Tico(engine, wheels, color...)''
+    \item Chcesz Poloneza? Inne szczegóły: ,,new Polonez(...)''
+    \item Duplikacja logiki tworzenia w wielu miejscach
+    \item Zmiana w konstrukcji = zmiany wszędzie
+\end{itemize}
+
+\pause
+
+\vspace{0.5cm}
+
+\begin{center}
+\Large
+\textbf{Z Factory Method:}
+\end{center}
+
+\vspace{0.3cm}
+
+\begin{itemize}
+    \item Fabryka wie JAK tworzyć: \texttt{create\_car("Tico")}
+    \item Logika tworzenia w JEDNYM miejscu
+    \item Klient nie musi znać szczegółów
+    \item Zmiana konstrukcji? Poprawiasz tylko factory
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Wyobraźcie sobie...}
+\begin{center}
+\Large
+Wyobraźcie sobie, że jesteście studentami którzy\\
+dostali \textit{pozornie łatwe} zadanie.
+\end{center}
+
+\pause
+
+\vspace{0.5cm}
+
+\textbf{Tydzień temu:} ,,Zaimplementujcie wzorzec Bridge dla botów!''
+
+\pause
+
+\begin{itemize}
+    \item Zrobiliście super rozwiązanie!
+    \item 8 klas zamiast 16!
+    \item Bridge działa perfekcyjnie!
+\end{itemize}
+
+\pause
+
+\vspace{0.5cm}
+
+\textbf{Prowadzący:} ,,Aha, zapomniałem wspomnieć... testy muszą przejść.''
+
+\pause
+
+\vspace{0.3cm}
+
+\begin{center}
+\Large
+\textcolor{red}{ImportError: cannot import name 'TrollTwitterBot'} \\
+\vspace{0.3cm}
+\normalsize
+\textit{Wredny prowadzący was wpuścił w maliny...}
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Co się stało? -- Testy importują stare klasy}
+\begin{lstlisting}
+# tests/test_bot_simulator.py
+from bot_simulator import (
+    TrollTwitterBot,        # <-- Ta klasa nie istnieje!
+    TrollFacebookBot,       # <-- Ta tez nie!
+    SpammerTwitterBot,      # <-- I ta nie!
+    # ... 13 wiecej klas ktore nie istnieja
+    get_bot
+)
+
+class TestBotBasicInfo:
+    def test_troll_twitter_info(self):
+        bot = TrollTwitterBot()  # <-- Tworzy obiekt bezposrednio!
+        assert bot.bot_type == "Troll"
+        assert bot.platform == "Twitter"
+\end{lstlisting}
+
+\pause
+
+\vspace{0.3cm}
+
+\textbf{Problem:} Po Bridge mamy tylko \texttt{TrollBot} i \texttt{Twitter}. \\
+Nie mamy \texttt{TrollTwitterBot}, \texttt{TrollFacebookBot} itd.!
+\end{frame}
+
+\begin{frame}{Dlaczego to problem?}
+\begin{itemize}
+    \item Testy \textbf{importują} 16 klas: \texttt{TrollTwitterBot}, \texttt{SpammerFacebookBot}...
+    \item Testy \textbf{tworzą obiekty} bezpośrednio: \texttt{bot = TrollTwitterBot()}
+    \item Po Bridge takie klasy \textbf{nie istnieją}
+    \item Python: \texttt{ImportError: cannot import name 'TrollTwitterBot'}
+\end{itemize}
+
+\vspace{0.5cm}
+
+\begin{center}
+\Large
+Bridge rozwiązał eksplozję klas... \\
+\vspace{0.3cm}
+\normalsize
+...ale stworzył nowy problem: \textbf{zgodność wsteczna}
+\end{center}
+
+\vspace{0.5cm}
+
+\textbf{Pytanie:} Jak ,,udać'' że stare klasy dalej istnieją?
+\end{frame}
+
+\begin{frame}[fragile]{Naiwne rozwiązanie -- 16 adapterów ręcznie}
+\begin{lstlisting}[basicstyle=\ttfamily\tiny]
+# Adapter #1
+class TrollTwitterBot:
+    def __init__(self):
+        self._bot = TrollBot(Twitter())
+        self.bot_type = self._bot.bot_type
+        self.platform = self._bot.platform
+    def generate_post(self, topic):
+        return self._bot.generate_post(topic)
+
+# Adapter #2
+class TrollFacebookBot:
+    def __init__(self):
+        self._bot = TrollBot(Facebook())
+        self.bot_type = self._bot.bot_type
+        self.platform = self._bot.platform
+    def generate_post(self, topic):
+        return self._bot.generate_post(topic)
+
+# ... i tak dalej dla 14 kolejnych klas
+# COPY-PASTE HORROR!
+\end{lstlisting}
+
+\pause
+
+\textcolor{red}{[X]} 16 prawie identycznych klas \\
+\textcolor{red}{[X]} Duplikacja kodu \\
+\textcolor{red}{[X]} Żmudne i podatne na błędy
+\end{frame}
+
+\begin{frame}{Moment... to znowu eksplozja klas!}
+\begin{center}
+\Large
+Bridge rozwiązał problem 16 klas... \\
+\vspace{0.3cm}
+\normalsize
+...i zaraz napiszemy 16 adapterów? 
+\end{center}
+
+\pause
+
+\vspace{0.5cm}
+
+\begin{itemize}
+    \item Bridge: \textbf{8 klas} (4 boty + 4 platformy)
+    \item Adaptery: \textbf{+16 klas} ręcznie pisanych
+    \item Razem: \textbf{24 klasy}
+\end{itemize}
+
+\pause
+
+\vspace{0.5cm}
+
+\textbf{Potrzebujemy:} Sposób na \textit{automatyczne generowanie} tych klas!
+\end{frame}
+
+\begin{frame}{Wzorzec Factory Method -- idea}
+\begin{center}
+\Large
+\textbf{Factory Method} \\
+\vspace{0.3cm}
+\normalsize
+Metoda która \textit{tworzy obiekty} bez specyfikowania dokładnej klasy
+\end{center}
+
+\vspace{0.5cm}
+
+\pause
+
+\textbf{W naszym przypadku:}
+\begin{itemize}
+    \item Factory Method który \textbf{generuje klasy} (nie obiekty!)
+    \item Używamy \texttt{type()} lub closure
+    \item Pętla która tworzy wszystkie 16 klas automatycznie
+\end{itemize}
+
+\pause
+
+\vspace{0.5cm}
+
+\begin{center}
+\textbf{Zamiast pisać 16 razy to samo...} \\
+\vspace{0.3cm}
+...napiszemy \textbf{jedną funkcję + pętlę}!
+\end{center}
+\end{frame}
+
+\begin{frame}[fragile]{Factory Method -- prosty przykład}
+\begin{center}
+\Large
+Najpierw zobaczmy \textbf{zwykły} Factory Method \\
+\vspace{0.3cm}
+\normalsize
+(który tworzy obiekty)
+\end{center}
+
+\vspace{0.5cm}
+
+\begin{lstlisting}[basicstyle=\ttfamily\tiny]
+# Bez Factory - musisz znac szczegoly:
+if typ == "Troll":
+    bot = TrollBot(Twitter())
+elif typ == "Spammer":
+    bot = SpammerBot(Twitter())
+# ... itd, w kazdym miejscu kodu!
+
+# Z Factory - delegujemy tworzenie:
+def create_bot(typ, platforma):
+    if typ == "Troll":
+        return TrollBot(platforma())
+    elif typ == "Spammer":
+        return SpammerBot(platforma())
+    # ... logika w JEDNYM miejscu
+
+# Uzycie:
+bot = create_bot("Troll", Twitter)  # Proste!
+\end{lstlisting}
+\end{frame}
+
+
+
+\begin{frame}{Nasza sytuacja -- Factory tworzy KLASY}
+\begin{center}
+\Large
+Standardowy Factory Method tworzy \textbf{obiekty}. \\
+\vspace{0.3cm}
+\normalsize
+My używamy go do tworzenia \textbf{klas}!
+\end{center}
+
+\pause
+
+\vspace{0.5cm}
+
+\textbf{Dlaczego?}
+\begin{itemize}
+    \item Testy potrzebują KLAS: \texttt{TrollTwitterBot}, \texttt{SpammerFacebookBot}...
+    \item Mamy 16 kombinacji (4 boty x 4 platformy)
+    \item Wszystkie adaptery wyglądają prawie tak samo
+    \item Różnią się tylko: jaki bot + jaka platforma
+\end{itemize}
+
+\pause
+
+\vspace{0.5cm}
+
+\textbf{Rozwiązanie:}
+\begin{itemize}
+    \item Factory Method który \textit{generuje} klasę adaptera
+    \item Pętla która wywołuje factory 16 razy
+    \item Każda wygenerowana klasa ,,pamięta'' swój bot i platformę
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Factory Method -- tworzenie klasy}
+\begin{lstlisting}[basicstyle=\ttfamily\tiny]
+def create_bot_adapter(bot_class, platform_class):
+    """
+    Factory Method: tworzy klase adaptera dla danej kombinacji.
+    Zwraca KLASE, nie obiekt!
+    """
+    class BotAdapter:
+        def __init__(self):
+            # Tworzy bota z platforma (Bridge!)
+            # Tu uzywamy bot_class i platform_class!
+            # Skad BotAdapter je zna? Z CLOSURE!
+            self._bot = bot_class(platform_class())
+            self.bot_type = self._bot.bot_type
+            self.platform = self._bot.platform
+        
+        def generate_post(self, topic):
+            # Deleguje do prawdziwego bota
+            return self._bot.generate_post(topic)
+    
+    return BotAdapter  # Zwracamy KLASE
+\end{lstlisting}
+
+\vspace{0.3cm}
+
+\textbf{Magia:} Ta funkcja \textit{generuje} klasę za nas!
+\end{frame}
+
+\begin{frame}[fragile]{Pętla -- 16 klas w 5 linijkach!}
+\begin{lstlisting}[basicstyle=\ttfamily\tiny]
+# Mapowanie nazw na klasy
+bot_types = {
+    "Troll": TrollBot,
+    "Spammer": SpammerBot,
+    "Conspiracist": ConspiracistBot,
+    "FakeNews": FakeNewsBot
+}
+
+platforms = {
+    "Twitter": Twitter,
+    "Facebook": Facebook,
+    "LinkedIn": LinkedIn,
+    "TikTok": TikTok
+}
+
+# PETLA generujaca 16 klas!
+for bot_name, bot_class in bot_types.items():
+    for platform_name, platform_class in platforms.items():
+        class_name = f"{bot_name}{platform_name}Bot"
+        # Tworzymy klase i wrzucamy do globals()
+        globals()[class_name] = create_bot_adapter(bot_class, platform_class)
+\end{lstlisting}
+
+\textbf{BOOM!} 16 klas wygenerowanych automatycznie.
+\end{frame}
+
+\begin{frame}[fragile]{Jak to działa? -- Closure}
+\begin{center}
+\Large
+\textbf{Co to jest closure?}
+\end{center}
+
+\vspace{0.5cm}
+
+\begin{lstlisting}
+def create_bot_adapter(bot_class, platform_class):
+    # bot_class i platform_class sa parametrami
+    
+    class BotAdapter:
+        def __init__(self):
+            # Tu uzywamy bot_class i platform_class!
+            # Skad BotAdapter je zna? Z CLOSURE!
+            self._bot = bot_class(platform_class())
+    
+    return BotAdapter
+\end{lstlisting}
+
+\vspace{0.3cm}
+
+\textbf{Closure = funkcja wewnętrzna "pamięta" zmienne z funkcji zewnętrznej}
+
+\pause
+
+\vspace{0.3cm}
+
+Każda wygenerowana klasa ,,zamyka'' (closes over) swoje \texttt{bot\_class} i \texttt{platform\_class}!
+\end{frame}
+
+\begin{frame}[fragile]{Alternatywa: Uzywanie type()}
+\begin{lstlisting}[basicstyle=\ttfamily\tiny]
+def create_bot_adapter_with_type(bot_class, platform_class):
+    """Alternatywne podejscie - uzywamy type()"""
+    
+    # Definiujemy metody
+    def __init__(self):
+        self._bot = bot_class(platform_class())
+        self.bot_type = self._bot.bot_type
+        self.platform = self._bot.platform
+    
+    def generate_post(self, topic):
+        return self._bot.generate_post(topic)
+    
+    # type(name, bases, dict) tworzy nowa klase!
+    return type('BotAdapter', (object,), {
+        '__init__': __init__,
+        'generate_post': generate_post
+    })
+
+# Uzycie identyczne:
+TrollTwitterBot = create_bot_adapter_with_type(TrollBot, Twitter)
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}{Closure vs type() -- które wybrać?}
+\begin{columns}
+\begin{column}{0.48\textwidth}
+\textbf{Closure (klasa wewnątrz w funkcji):}
+
+\vspace{0.3cm}
+
+\textcolor{green}{[+]} Czytelniejsze \\
+\textcolor{green}{[+]} Bardziej Pythonic \\
+\textcolor{green}{[+]} Łatwiejsze do debugowania \\
+\textcolor{green}{[+]} Lepsze IDE support
+
+\vspace{0.3cm}
+
+\textcolor{red}{[-]} Klasa nazywa się ,,BotAdapter'' \\
+\textcolor{red}{[-]} Trochę ,,magii''
+\end{column}
+\begin{column}{0.48\textwidth}
+\textbf{type():}
+
+\vspace{0.3cm}
+
+\textcolor{green}{[+]} Można ustawić \_\_name\_\_ \\
+\textcolor{green}{[+]} Pełna kontrola nad tworzeniem \\
+\textcolor{green}{[+]} Metaprogramowanie
+
+\vspace{0.3cm}
+
+\textcolor{red}{[-]} Mniej czytelne \\
+\textcolor{red}{[-]} Więcej boilerplate \\
+\textcolor{red}{[-]} Trudniejsze do debugowania
+\end{column}
+\end{columns}
+
+\vspace{0.5cm}
+
+\begin{center}
+\textbf{Rekomendacja:} Używaj closure (prostsze). \\
+Używaj type() tylko jeśli potrzebujesz pełnej kontroli nad klasą.
+\end{center}
+\end{frame}
+
+\begin{frame}{Co tu się dzieje? -- Krok po kroku}
+\begin{center}
+\Large
+\textbf{1. Factory Method tworzy szablon klasy}
+\end{center}
+
+\vspace{0.5cm}
+
+\texttt{create\_bot\_adapter(TrollBot, Twitter)} zwraca:
+\begin{itemize}
+    \item Nową \textbf{klasę} (nie obiekt!)
+    \item Która w \texttt{\_\_init\_\_()} tworzy \texttt{TrollBot(Twitter())}
+    \item I deleguje metody do niego
+\end{itemize}
+
+\pause
+
+\vspace{0.5cm}
+
+\begin{center}
+\Large
+\textbf{2. Pętla generuje wszystkie kombinacje}
+\end{center}
+
+\vspace{0.5cm}
+
+\begin{itemize}
+    \item 4 typy botów x 4 platformy = 16 kombinacji
+    \item Dla każdej wywołujemy factory
+    \item Wrzucamy wynik do \texttt{globals()} pod odpowiednią nazwą
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Co to jest globals()?}
+\begin{lstlisting}[language=Python]
+# globals() to slownik wszystkich zmiennych globalnych w module
+
+# Normalnie piszemy:
+TrollTwitterBot = create_bot_adapter(TrollBot, Twitter)
+
+# Ale w petli mamy nazwe jako string:
+class_name = "TrollTwitterBot"
+
+# Wiec uzywamy globals():
+globals()[class_name] = create_bot_adapter(TrollBot, Twitter)
+
+# Efekt jest IDENTYCZNY!
+\end{lstlisting}
+
+\vspace{0.5cm}
+
+\textbf{globals()} pozwala tworzyć zmienne o nazwach generowanych dynamicznie!
+\end{frame}
+
+\begin{frame}[fragile]{Alternatywa: setattr()}
+\begin{lstlisting}
+import sys
+
+# Zamiast globals() mozna uzyc setattr():
+current_module = sys.modules[__name__]
+
+for bot_name, bot_class in bot_types.items():
+    for platform_name, platform_class in platforms.items():
+        class_name = f"{bot_name}{platform_name}Bot"
+        
+        # Dodajemy atrybut do modulu
+        setattr(current_module, class_name, 
+                create_bot_adapter(bot_class, platform_class))
+\end{lstlisting}
+
+\vspace{0.5cm}
+
+Obie metody działają identycznie! \\
+\texttt{globals()} jest prostsze, \texttt{setattr()} bardziej ,,Pythonic''.
+\end{frame}
+
+\begin{frame}[fragile]{Porównanie: Przed i Po}
+\begin{columns}
+\begin{column}{0.48\textwidth}
+\textbf{Przed (ręczne adaptery):}
+\begin{lstlisting}[basicstyle=\ttfamily\tiny]
+class TrollTwitterBot:
+    def __init__(self):
+        self._bot = TrollBot(Twitter())
+        # ...
+
+class TrollFacebookBot:
+    def __init__(self):
+        self._bot = TrollBot(Facebook())
+        # ...
+
+class TrollLinkedInBot:
+    def __init__(self):
+        self._bot = TrollBot(LinkedIn())
+        # ...
+
+# ... 13 wiecej klas
+# ~200 linii kodu!
+\end{lstlisting}
+
+\textcolor{red}{[X]} Duplikacja \\
+\textcolor{red}{[X]} Podatne na błędy \\
+\textcolor{red}{[X]} Trudno utrzymać
+\end{column}
+\begin{column}{0.48\textwidth}
+\textbf{Po (Factory + pętla):}
+\begin{lstlisting}[basicstyle=\ttfamily\tiny]
+def create_bot_adapter(bot_cls, plat_cls):
+    class Adapter:
+        def __init__(self):
+            self._bot = bot_cls(plat_cls())
+            # ...
+    return Adapter
+
+# Petla generuje 16 klas:
+for bot_name, bot_cls in bots.items():
+    for plat_name, plat_cls in platforms.items():
+        name = f"{bot_name}{plat_name}Bot"
+        globals()[name] = create_bot_adapter(
+            bot_cls, plat_cls
+        )
+
+# ~20 linii kodu!
+\end{lstlisting}
+
+\textcolor{green}{[OK]} Brak duplikacji \\
+\textcolor{green}{[OK]} Automatyczne \\
+\textcolor{green}{[OK]} Łatwo dodać nową kombinację
+\end{column}
+\end{columns}
+\end{frame}
+
+\begin{frame}{Dlaczego to jest eleganckie?}
+\begin{itemize}
+    \item \textbf{DRY (Don't Repeat Yourself)} -- jedna definicja zamiast 16
+    \item \textbf{Automatyzacja} -- dodajesz nowego bota? Pętla go obsłuży
+    \item \textbf{Mniej kodu} -- 20 linii zamiast 200
+    \item \textbf{Łatwiejsze utrzymanie} -- bug w adapterze? Poprawiasz w jednym miejscu
+    \item \textbf{Zgodność wsteczna} -- kod wywołujący stare klasy działa bez zmian
+\end{itemize}
+
+\vspace{0.5cm}
+
+Bridge dał Wam elegancką architekturę. \\
+Factory Method załatwił kompatybilność z testami.
+\end{frame}
+
+\begin{frame}{Kiedy używać Factory Method?}
+\begin{itemize}
+    \item Musisz \textbf{tworzyć wiele podobnych klas/obiektów}
+    \item Chcesz \textbf{uniknąć duplikacji} kodu tworzącego
+    \item Potrzebujesz \textbf{elastyczności} -- łatwo dodać nowy typ
+    \item \textbf{Zgodność wsteczna} -- stare API musi działać
+    \item Tworzenie obiektu jest \textbf{skomplikowane} i powtarzalne
+\end{itemize}
+
+\vspace{0.5cm}
+
+\textbf{Przykłady z życia:}
+\begin{itemize}
+    \item Generowanie klas testowych
+    \item ORM (mapowanie baz danych na klasy)
+    \item Systemy systemów (albo pluginów)
+    \item Migracje kodu (stare API -> nowe API)
+\end{itemize}
+
+\vspace{0.5cm}
+
+\textbf{Trade-off:} Trochę ,,magii'' (dynamiczne tworzenie klas), ale oszczędza tony kodu!
+\end{frame}
+
+\begin{frame}{Dzisiaj na zajęciach}
+\begin{enumerate}
+    \item Weźcie swoje rozwiązanie Bridge z poprzednich zajęć
+    \item Zaimplementujcie Factory Method + pętlę do generowania adapterów
+    \item Testy powinny przejść!
+\end{enumerate}
+
+\vspace{1cm}
+
+\begin{center}
+\Large
+\textbf{Pytania?} \\
+\vspace{0.5cm}
+\normalsize
+Jeśli nie -- to do dzieła! \\
+\end{center}
+\end{frame}
+
+\end{document}
