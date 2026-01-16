@@ -5,7 +5,7 @@ UWAGA: Ten kod ma EKSPLOZJE KLAS! Uzyj wzorca Bridge.
 from abc import ABC, abstractmethod
 from typing import Dict
 import random
-
+from lib.bot import *
 
 class Platform(ABC):
     @abstractmethod
@@ -175,6 +175,24 @@ for bot_name, bot_class in bot_types.items():
         globals()[class_name] = create_bot_adapter(bot_class, platform_class)
 
 
+# ============================================================================
+# FUNKCJA POMOCNICZA
+# ============================================================================
+
+def get_bot(bot_type: str, platform: str):
+    """
+    Zwraca odpowiedniego bota dla danego typu i platformy.
+    
+    SPÓJRZ NA TE IFY! 16 kombinacji! A co jak dodamy Mastodon i Reddit?
+    """
+    bots: list = Bot.__subclasses__()
+    platforms: list = Platform.__subclasses__()
+
+    for p in platforms:
+        if p.__name__ == platform:
+            for b in bots:
+                if b.__name__ == bot_type:
+                    return b(platform=p())
 def get_bot(bot_type: str, platform_name: str):
     if bot_type == "Troll":
         if platform_name == "Twitter": return TrollTwitterBot()
@@ -207,6 +225,24 @@ if __name__ == "__main__":
     random.seed(42)
     
     bot_types = ["Troll", "Spammer", "Conspiracist", "FakeNews"]
+    platforms = ["Twitter", "Facebook", "LinkedIn", "TikTok"]
+    topics = ["AI", "szczepionki", "5G", "kryptowaluty"]
+    
+    for bot_type in bot_types:
+        print(f"\n{'='*60}")
+        print(f"TYP BOTA: {bot_type}")
+        print("=" * 60)
+        
+        for platform in platforms:
+            bot = get_bot(bot_type, platform)
+            topic = random.choice(topics)
+            result = bot.generate_post(topic)
+            
+            print(f"\n[{platform}] Temat: {topic}")
+            print("-" * 40)
+            print(result["content"])
+
+            
     platform_names = ["Twitter", "Facebook", "LinkedIn", "TikTok"]
     
     for b_type in bot_types:
