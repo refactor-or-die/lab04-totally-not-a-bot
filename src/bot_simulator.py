@@ -17,15 +17,18 @@ import random
 # ============================================================================
 
 class Bot(ABC):
-    abstractmethod
+    @abstractmethod
     def __init__(self, platform):
+        self.platform = platform
+        self.bot_type = __class__.__name__
         pass
-    abstractmethod
+
+    @abstractmethod
     def generate_post(self, topic: str) -> Dict:
         pass
         
-    def generate_formatted(self, content: str) -> Dict:
-        self.platform.generate_formatted(content)
+    def generate_post(self, content: str) -> Dict:
+        pass
     
 
 
@@ -117,7 +120,7 @@ class FakeNews(Bot):
 # ============================================================================
 
 class Platform(ABC):
-    abstractmethod
+    @abstractmethod
     def generate_formatted(self, content: str, topic: str) -> str:
         pass
         
@@ -172,13 +175,13 @@ def create_bot_adapter(bot_class, platform_class):
         def generate_post(self, topic):
             return self._bot.generate_post(topic)
     
-    return BotAdapter  # Zwraca KLASE !?!??!!??!?!?!?!?!?
+    return BotAdapter  # Zwraca KLASE, nie obiekt!
 
 bot_types = {
-    "Troll": Troll,
-    "Spammer": Spammer,
-    "Conspiracist": Conspiracist,
-    "FakeNews": FakeNews
+"Troll": Troll,
+"Spammer": Spammer,
+"Conspiracist": Conspiracist,
+"FakeNews": FakeNews
 }
 
 platforms = {
@@ -188,7 +191,7 @@ platforms = {
     "TikTok": TikTok
 }
 
-# Magia!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# Magia!
 for bot_name, bot_class in bot_types.items():
     for platform_name, platform_class in platforms.items():
         class_name = f"{bot_name}{platform_name}Bot"
